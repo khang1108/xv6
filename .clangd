@@ -1,0 +1,7 @@
+CompileFlags:
+    Add:
+        - -I.
+
+Diagnostics:
+    Suppress:
+        - unknown_typename
