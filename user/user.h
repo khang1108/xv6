@@ -1,12 +1,12 @@
 struct stat;
 
 // system calls
-int fork(void);
+int fork(void); // Dùng để tạo tiến trình con 
 int exit(int) __attribute__((noreturn));
 int wait(int*);
-int pipe(int*);
+int pipe(int*); // Dùng để tạo đường ống mới
 int write(int, const void*, int);
-int read(int, void*, int);
+int read(int, void*, int); // Dùng để đọc tối đa `n` bytes từ fd vào buf 
 int close(int);
 int kill(int);
 int exec(const char*, char**);
