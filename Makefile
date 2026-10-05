@@ -195,6 +195,7 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_primes\
+	$U/_pingpong\
 
 
 
