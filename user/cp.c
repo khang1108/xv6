@@ -14,17 +14,11 @@ dung cũ để ghi đè
 - @param: argv danh sach đối số
 - @return: Không trả về, thành công gọi exit(0), thất bị exit(1)
 */
-
-int main(int args, char* argv[]){
-    //Kiểm tra xem có đủ số lượng đối số không
-    if (args != 3){
-        fprintf(2, "usage: cp src dst\n");
-        exit(1);
-    }
-
-    int source = open(argv[1], O_RDONLY);
+__attribute__((noreturn)) void cp(char* src, char* dst)
+{
+    int source = open(src, O_RDONLY);
     if (source < 0){
-        fprintf(2, "cp: cannot open %s\n", argv[1]);
+        fprintf(2, "cp: cannot open %s\n", src);
         exit(1);
     }
 
@@ -33,9 +27,9 @@ int main(int args, char* argv[]){
     O_CREATE: tạo file nếu chưa tồn tại
     O_TRUNC: xóa nội dung cũ để sao chép ghi đè hoàn toàn
     */
-    int destination = open(argv[2], O_WRONLY | O_CREATE | O_TRUNC);
+    int destination = open(dst, O_WRONLY | O_CREATE | O_TRUNC);
     if (destination < 0){
-        fprintf(2, "cp: cannot open %s\n", argv[2]);
+        fprintf(2, "cp: cannot open %s\n", dst);
         close(source);
         exit(1);
     }
@@ -51,7 +45,7 @@ int main(int args, char* argv[]){
         while (total_written < bytes_read){
             int bytes_written = write(destination, buffer + total_written, bytes_read - total_written);
             if (bytes_written <= 0){
-                fprintf(2, "cp: cannot write %s\n", argv[2]);
+                fprintf(2, "cp: cannot write %s\n", dst);
                 close(source);
                 close(destination);
                 exit(1);
@@ -62,7 +56,7 @@ int main(int args, char* argv[]){
     //read() trả về 0 là EOF -> hợp lệ
     //Lỗi trả về -1
     if (bytes_read < 0){
-        fprintf(2, "cp: cannot read %s\n", argv[1]);
+        fprintf(2, "cp: cannot read %s\n", src);
         close(source);
         close(destination);
         exit(1);
@@ -70,4 +64,15 @@ int main(int args, char* argv[]){
     close(source);
     close(destination);
     exit(0);
+}
+
+int main(int args, char* argv[])
+{
+    //Kiểm tra xem có đủ số lượng đối số không
+    if (args != 3){
+        fprintf(2, "usage: cp src dst\n");
+        exit(1);
+    }
+
+    cp(argv[1], argv[2]);
 }
