@@ -196,6 +196,7 @@ UPROGS=\
 	$U/_zombie\
 	$U/_primes\
 	$U/_tree\
+	$U/_du\
 
 
 
