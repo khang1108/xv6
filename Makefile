@@ -197,6 +197,7 @@ UPROGS=\
 	$U/_primes\
 	$U/_tree\
 	$U/_pingpong\
+	$U/_cp\
 
 
 
