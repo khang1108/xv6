@@ -10,8 +10,8 @@ Sử dụng 2 pipe để tách riêng hai chiều truyền dữ liệu
 - @param argv danh sách tham số dòng lệnh, không có
 - @return Không trả về, thành công thì exit(0), lỗi thì exit(1)
 */
-
-int main(int args, char* argv[]){
+__attribute__((noreturn)) void pingpong(void)
+{
     int parent_to_child[2]; // Cha gửi con nhận
     int child_to_parent[2]; // Con gửi cha nhận
     //[0]: đầu đọc
@@ -102,4 +102,9 @@ int main(int args, char* argv[]){
         exit(1);
     }
     exit(0);
+}
+
+int main(int args, char* argv[])
+{
+    pingpong();
 }
