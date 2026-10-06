@@ -1,6 +1,7 @@
 #include "kernel/types.h"
 #include "kernel/fcntl.h"
 #include "user/user.h"
+#include "kernel/stat.h"
 
 /* @brief: Sao chép nội dung file nguồn sang file đích
 Lệnh: cp src dst
@@ -8,18 +9,49 @@ File nguồn mở chỉ đọc, file đích được tạo mới nếu không t�
 dung cũ để ghi đè
 */
 
-/* @brief: Kiểm tra đối số, sao chép dữ liệu từ nguồn sang đích
-Đọc và ghi từng buffer. Báo lỗi nếu mở, đọc, ghi thất bại
-- @param: args số lượng đối số, cụ thể ở đây là 3
-- @param: argv danh sach đối số
-- @return: Không trả về, thành công gọi exit(0), thất bị exit(1)
-*/
+/**
+ * @brief Sao chép dữ liệu theo buffer từ nguồn sang đích
+ * Báo lỗi nếu mở, đọc hoặc ghi thất bại
+ * @param src đường dẫn file nguồn
+ * @param dst đường dẫn file đích
+ * @return Không trả về; thành công gọi exit(0), lỗi gọi exit(1).
+ */
 __attribute__((noreturn)) void cp(char* src, char* dst)
 {
     int source = open(src, O_RDONLY);
     if (source < 0){
         fprintf(2, "cp: cannot open %s\n", src);
         exit(1);
+    }
+
+    //Kiểm tra loại nguồn và đích là thư mục hay file, nếu là thư mục thì báo lỗi
+    struct stat source_stat;
+    if (fstat(source, &source_stat) < 0){
+        fprintf(2, "cp: cannot stat %s\n", src);
+        close(source);
+        exit(1);
+    }
+    if (source_stat.type == T_DIR){
+        fprintf(2, "cp: source is a directory: %s\n", src);
+        close(source);
+        exit(1);
+    }
+
+    struct stat destination_stat;
+    if (stat(dst, &destination_stat) == 0){
+        if (destination_stat.type == T_DIR){
+            fprintf(2, "cp: destination is a directory: %s\n", dst);
+            close(source);
+            exit(1);
+        }
+
+        //Kiểm tra xem nguồn và đích có phải cùng một file không, nếu có thì báo lỗi
+        if (source_stat.dev == destination_stat.dev &&
+            source_stat.ino == destination_stat.ino){
+            fprintf(2, "cp: source and destination are the same file\n");
+            close(source);
+            exit(1);
+        }
     }
 
     /*
@@ -66,6 +98,13 @@ __attribute__((noreturn)) void cp(char* src, char* dst)
     exit(0);
 }
 
+/**
+ * @brief Kiểm tra đối số và gọi hàm sao chép file
+ * @param args số lượng đối số, cụ thể là 3
+ * @param argv danh sách đối số, argv[1] là nguồn, argv[2] là đích
+ * @return Không trả về; đối số sai gọi exit(1), còn cp() kết thúc
+ * tiến trình sau khi xử lý sao chép
+ */
 int main(int args, char* argv[])
 {
     //Kiểm tra xem có đủ số lượng đối số không
