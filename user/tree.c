@@ -14,6 +14,10 @@
 #include "kernel/fs.h"
 #include "kernel/param.h"
 #include "user/user.h"
+#include "kernel/stat.h"
+#include "kernel/fs.h"
+
+#define PATHSIZ 512
 
 #define UNLIMITED_DEPTH -1
 #define MAX_TREE_DEPTH 64

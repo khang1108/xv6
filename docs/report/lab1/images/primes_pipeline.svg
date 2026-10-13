@@ -1,0 +1,165 @@
+<svg class="p" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      *{box-sizing:border-box}
+      .p text{font-family:"Latin Modern Roman",Cambria,Georgia,"Times New Roman",serif;fill:#1a1a1a}
+      .p .pnl{font-size:12px;font-style:italic;fill:#5b4a72;font-weight:600}
+      .p .box{font-size:11.5px}
+      .p .sub{font-size:9px;fill:#6b7280}
+      .p .lbl{font-size:9.5px}
+      .p .key{font-size:10px}
+      .p .w{fill:none;stroke:#2b2b2b;stroke-width:1.1;marker-end:url(#mk)}
+      .p .w-dash{fill:none;stroke:#2b2b2b;stroke-width:1.1;stroke-dasharray:3 3;marker-end:url(#mk)}
+      .p .r{fill:none;stroke:#8b1a1a;stroke-width:1.2;marker-end:url(#mkr)}
+      .p .g{fill:none;stroke:#2d5236;stroke-width:1.1;marker-end:url(#mkg)}
+    </style>
+    <marker id="mk" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1.5 L6.5 4 L1 6.5 z" fill="#2b2b2b"/>
+    </marker>
+    <marker id="mkr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1.5 L6.5 4 L1 6.5 z" fill="#8b1a1a"/>
+    </marker>
+    <marker id="mkg" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1.5 L6.5 4 L1 6.5 z" fill="#2d5236"/>
+    </marker>
+  </defs>
+
+  <!-- BACKGROUND CONTAINER -->
+  <rect x="12" y="10" width="936" height="395" rx="10" fill="#fdfdfe" stroke="#c3aedb" stroke-width="1.1"/>
+  <text class="pnl" x="28" y="30">Mô hình kiến trúc Pipeline đồng thời — Concurrent Sieve (primes.c)</text>
+
+  <!-- ================= STAGE 0: MAIN PROCESS ================= -->
+  <rect x="28" y="55" width="135" height="150" rx="8" fill="#e3f0e6" stroke="#5f8a6b" stroke-width="1.2"/>
+  <text class="box" x="95" y="78" text-anchor="middle" font-weight="bold" fill="#2d5236">Tiến trình cha</text>
+  <text class="sub" x="95" y="93" text-anchor="middle">Main Process (PID 0)</text>
+  <line x1="36" y1="102" x2="155" y2="102" stroke="#5f8a6b" stroke-width="0.6" stroke-dasharray="2 2"/>
+  
+  <rect x="38" y="112" width="115" height="36" rx="4" fill="#ffffff" stroke="#5f8a6b" stroke-width="0.8"/>
+  <text class="lbl" x="95" y="126" text-anchor="middle" font-weight="bold" fill="#1e3a24">Vòng lặp sinh số</text>
+  <text class="sub" x="95" y="139" text-anchor="middle">Ghi: 2, 3, 4, ..., 280</text>
+  
+  <rect x="38" y="157" width="115" height="36" rx="4" fill="#d0e6d5" stroke="#5f8a6b" stroke-width="0.8"/>
+  <text class="lbl" x="95" y="171" text-anchor="middle" fill="#2d5236">Đóng: close(fd[0])</text>
+  <text class="sub" x="95" y="184" text-anchor="middle">Đợi: wait(0) → exit</text>
+
+  <!-- PIPE 0 ARROW -->
+  <path class="w" d="M163,130 H215"/>
+  <rect x="168" y="105" width="42" height="18" rx="3" fill="#ffffff" stroke="#7f93b8" stroke-width="0.7"/>
+  <text class="lbl" x="189" y="117" text-anchor="middle" font-weight="bold" fill="#1e3a6a">pipe 0</text>
+  <text class="sub" x="189" y="143" text-anchor="middle" fill="#6b7280">2,3,4,5..</text>
+
+  <!-- ================= STAGE 1: FILTER p=2 ================= -->
+  <rect x="215" y="55" width="155" height="150" rx="8" fill="#fdf6d5" stroke="#c9b043" stroke-width="1.2"/>
+  <text class="box" x="292" y="78" text-anchor="middle" font-weight="bold" fill="#7a6200">Trạm lọc 1</text>
+  <text class="sub" x="292" y="93" text-anchor="middle">Filter Process 1 (p = 2)</text>
+  <line x1="223" y1="102" x2="362" y2="102" stroke="#c9b043" stroke-width="0.6" stroke-dasharray="2 2"/>
+
+  <!-- Output badge: prime 2 -->
+  <rect x="228" y="109" width="129" height="22" rx="4" fill="#fadcdc" stroke="#c08484" stroke-width="0.9"/>
+  <text class="lbl" x="292" y="124" text-anchor="middle" font-weight="bold" fill="#8b1a1a">IN: "prime 2"</text>
+
+  <!-- Filter logic -->
+  <rect x="228" y="136" width="129" height="30" rx="4" fill="#ffffff" stroke="#c9b043" stroke-width="0.8"/>
+  <text class="lbl" x="292" y="149" text-anchor="middle">Lọc: nếu n % 2 != 0</text>
+  <text class="sub" x="292" y="161" text-anchor="middle">đẩy tiếp sang pipe 1</text>
+
+  <!-- FD status -->
+  <text class="sub" x="292" y="182" text-anchor="middle" fill="#4b5563">close(pipe0[0]), wait(0)</text>
+  <text class="sub" x="292" y="195" text-anchor="middle" fill="#8b1a1a">close(pipe1[1]) sau vòng lặp</text>
+
+  <!-- PIPE 1 ARROW -->
+  <path class="w" d="M370,130 H422"/>
+  <rect x="375" y="105" width="42" height="18" rx="3" fill="#ffffff" stroke="#7f93b8" stroke-width="0.7"/>
+  <text class="lbl" x="396" y="117" text-anchor="middle" font-weight="bold" fill="#1e3a6a">pipe 1</text>
+  <text class="sub" x="396" y="143" text-anchor="middle" fill="#6b7280">3,5,7,9..</text>
+
+  <!-- ================= STAGE 2: FILTER p=3 ================= -->
+  <rect x="422" y="55" width="155" height="150" rx="8" fill="#fdf6d5" stroke="#c9b043" stroke-width="1.2"/>
+  <text class="box" x="499" y="78" text-anchor="middle" font-weight="bold" fill="#7a6200">Trạm lọc 2</text>
+  <text class="sub" x="499" y="93" text-anchor="middle">Filter Process 2 (p = 3)</text>
+  <line x1="430" y1="102" x2="569" y2="102" stroke="#c9b043" stroke-width="0.6" stroke-dasharray="2 2"/>
+
+  <!-- Output badge: prime 3 -->
+  <rect x="435" y="109" width="129" height="22" rx="4" fill="#fadcdc" stroke="#c08484" stroke-width="0.9"/>
+  <text class="lbl" x="499" y="124" text-anchor="middle" font-weight="bold" fill="#8b1a1a">IN: "prime 3"</text>
+
+  <!-- Filter logic -->
+  <rect x="435" y="136" width="129" height="30" rx="4" fill="#ffffff" stroke="#c9b043" stroke-width="0.8"/>
+  <text class="lbl" x="499" y="149" text-anchor="middle">Lọc: nếu n % 3 != 0</text>
+  <text class="sub" x="499" y="161" text-anchor="middle">đẩy tiếp sang pipe 2</text>
+
+  <text class="sub" x="499" y="182" text-anchor="middle" fill="#4b5563">close(pipe1[0]), wait(0)</text>
+  <text class="sub" x="499" y="195" text-anchor="middle" fill="#8b1a1a">close(pipe2[1]) sau vòng lặp</text>
+
+  <!-- PIPE 2 ARROW -->
+  <path class="w" d="M577,130 H629"/>
+  <rect x="582" y="105" width="42" height="18" rx="3" fill="#ffffff" stroke="#7f93b8" stroke-width="0.7"/>
+  <text class="lbl" x="603" y="117" text-anchor="middle" font-weight="bold" fill="#1e3a6a">pipe 2</text>
+  <text class="sub" x="603" y="143" text-anchor="middle" fill="#6b7280">5,7,11..</text>
+
+  <!-- ================= STAGE 3: FILTER p=5 ================= -->
+  <rect x="629" y="55" width="155" height="150" rx="8" fill="#fdf6d5" stroke="#c9b043" stroke-width="1.2"/>
+  <text class="box" x="706" y="78" text-anchor="middle" font-weight="bold" fill="#7a6200">Trạm lọc 3</text>
+  <text class="sub" x="706" y="93" text-anchor="middle">Filter Process 3 (p = 5)</text>
+  <line x1="637" y1="102" x2="776" y2="102" stroke="#c9b043" stroke-width="0.6" stroke-dasharray="2 2"/>
+
+  <!-- Output badge: prime 5 -->
+  <rect x="642" y="109" width="129" height="22" rx="4" fill="#fadcdc" stroke="#c08484" stroke-width="0.9"/>
+  <text class="lbl" x="706" y="124" text-anchor="middle" font-weight="bold" fill="#8b1a1a">IN: "prime 5"</text>
+
+  <!-- Filter logic -->
+  <rect x="642" y="136" width="129" height="30" rx="4" fill="#ffffff" stroke="#c9b043" stroke-width="0.8"/>
+  <text class="lbl" x="706" y="149" text-anchor="middle">Lọc: nếu n % 5 != 0</text>
+  <text class="sub" x="706" y="161" text-anchor="middle">đẩy tiếp sang pipe 3</text>
+
+  <text class="sub" x="706" y="182" text-anchor="middle" fill="#4b5563">close(pipe2[0]), wait(0)</text>
+  <text class="sub" x="706" y="195" text-anchor="middle" fill="#8b1a1a">close(pipe3[1]) sau vòng lặp</text>
+
+  <!-- DOTS ARROW TO FINAL -->
+  <path class="w-dash" d="M784,130 H824"/>
+
+  <!-- ================= FINAL STAGE: EOF ================= -->
+  <rect x="824" y="55" width="108" height="150" rx="8" fill="#eaf0fb" stroke="#7f93b8" stroke-width="1.2"/>
+  <text class="box" x="878" y="78" text-anchor="middle" font-weight="bold" fill="#1e3a6a">Trạm cuối</text>
+  <text class="sub" x="878" y="93" text-anchor="middle">p = 277 / 281</text>
+  <line x1="832" y1="102" x2="924" y2="102" stroke="#7f93b8" stroke-width="0.6" stroke-dasharray="2 2"/>
+
+  <rect x="832" y="112" width="92" height="36" rx="4" fill="#ffffff" stroke="#7f93b8" stroke-width="0.8"/>
+  <text class="lbl" x="878" y="126" text-anchor="middle" font-weight="bold" fill="#1e3a6a">read() ≤ 0</text>
+  <text class="sub" x="878" y="139" text-anchor="middle">Nhận tín hiệu EOF</text>
+
+  <rect x="832" y="157" width="92" height="36" rx="4" fill="#fadcdc" stroke="#c08484" stroke-width="0.8"/>
+  <text class="lbl" x="878" y="171" text-anchor="middle" font-weight="bold" fill="#8b1a1a">Kết thúc</text>
+  <text class="sub" x="878" y="184" text-anchor="middle">close → exit(0)</text>
+
+  <!-- ================= LOWER SECTION: 3 KEY TECHNICAL HIGHLIGHTS ================= -->
+  <line x1="28" y1="225" x2="932" y2="225" stroke="#c3aedb" stroke-width="0.8" stroke-dasharray="4 3"/>
+
+  <!-- CARD 1: DEADLOCK PREVENTION -->
+  <rect x="28" y="245" width="288" height="138" rx="8" fill="#eaf0fb" stroke="#7f93b8" stroke-width="1.1"/>
+  <text class="box" x="172" y="268" text-anchor="middle" font-weight="bold" fill="#1e3a6a">1. Chống Deadlock đệm Pipe (512B)</text>
+  <line x1="40" y1="276" x2="304" y2="276" stroke="#7f93b8" stroke-width="0.5"/>
+  <text class="lbl" x="42" y="296" fill="#1f2937">• Dãy số 2 → 280 gồm 279 số `int` (khoảng 1116 bytes).</text>
+  <text class="lbl" x="42" y="315" fill="#1f2937">• Bộ đệm pipe của xv6 chỉ chứa tối đa 512 bytes.</text>
+  <text class="lbl" x="42" y="334" fill="#8b1a1a">• <tspan font-weight="bold">Giải pháp:</tspan> fork() tiến trình con trước khi ghi,</text>
+  <text class="lbl" x="42" y="352" fill="#8b1a1a">  đọc và ghi diễn ra song song (streaming), không nghẽn.</text>
+
+  <!-- CARD 2: FD MANAGEMENT & EOF -->
+  <rect x="336" y="245" width="288" height="138" rx="8" fill="#fadcdc" stroke="#c08484" stroke-width="1.1"/>
+  <text class="box" x="480" y="268" text-anchor="middle" font-weight="bold" fill="#8b1a1a">2. Quản lý File Descriptor &amp; Báo EOF</text>
+  <line x1="348" y1="276" x2="612" y2="276" stroke="#c08484" stroke-width="0.5"/>
+  <text class="lbl" x="350" y="296" fill="#1f2937">• xv6 giới hạn mỗi tiến trình tối đa 16 FDs (`NOFILE`).</text>
+  <text class="lbl" x="350" y="315" fill="#1f2937">• Lệnh `read()` chỉ trả về 0 (EOF) khi <tspan font-weight="bold">mọi</tspan> đầu ghi đã đóng.</text>
+  <text class="lbl" x="350" y="334" fill="#2d5236">• <tspan font-weight="bold">Giải pháp:</tspan> Con đóng ngay `new_pipe[1]` và `left_fd`,</text>
+  <text class="lbl" x="350" y="352" fill="#2d5236">  cha đóng `new_pipe[0]`, và đóng `new_pipe[1]` khi hết số.</text>
+
+  <!-- CARD 3: RECURSION & ZOMBIE CLEANUP -->
+  <rect x="644" y="245" width="288" height="138" rx="8" fill="#e3f0e6" stroke="#5f8a6b" stroke-width="1.1"/>
+  <text class="box" x="788" y="268" text-anchor="middle" font-weight="bold" fill="#2d5236">3. Đồng bộ &amp; Xóa bỏ Zombie Process</text>
+  <line x1="656" y1="276" x2="920" y2="276" stroke="#5f8a6b" stroke-width="0.5"/>
+  <text class="lbl" x="658" y="296" fill="#1f2937">• Pipeline tạo thành chuỗi hàng chục tiến trình cha-con.</text>
+  <text class="lbl" x="658" y="315" fill="#1f2937">• Nếu tiến trình thoát mà không dọn dẹp → Zombie table.</text>
+  <text class="lbl" x="658" y="334" fill="#1e3a6a">• <tspan font-weight="bold">Giải pháp:</tspan> Mỗi mắt xích gọi `wait(0)` sau khi đọc xong</text>
+  <text class="lbl" x="658" y="352" fill="#1e3a6a">  để thu hồi tài nguyên tiến trình con theo thứ tự ngược.</text>
+
+</svg>
