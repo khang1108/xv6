@@ -199,6 +199,7 @@ UPROGS=\
 	$U/_diff\
 	$U/_du\
 	$U/_pingpong\
+	$U/_cp\
 
 
 
