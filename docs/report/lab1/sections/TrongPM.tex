@@ -5,6 +5,13 @@ Chương trình dùng hai pipe để trao đổi một byte giữa tiến trình
 
 Cha tạo \code{parent\_to\_child} và \code{child\_to\_parent}, sau đó gọi \code{fork()}. Cha gửi byte \code{'p'} qua pipe thứ nhất rồi chờ phản hồi qua pipe thứ hai. Con nhận byte, in \texttt{<pid>: received ping}, gửi lại byte vừa nhận và thoát. Cha nhận phản hồi, in \texttt{<pid>: received pong}, rồi gọi \code{wait(\&status\_child)} để thu hồi con.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/pingpong_flow.pdf}
+    \caption{Luồng trao đổi một byte và quản lý tài nguyên trong \texttt{pingpong.c}}
+    \label{fig:pingpong_flow}
+\end{figure}
+
 Ngay sau \code{fork()}, mỗi tiến trình đóng các đầu pipe không sử dụng:
 \begin{table}[H]
     \centering
@@ -54,6 +61,13 @@ Sau các kiểm tra, chương trình mở đích với các cờ \code{O\_WRONLY
 Chương trình dùng buffer 512 byte theo gợi ý của đề. Đây là kích thước buffer ở user space; kích thước block của hệ thống tệp trong \texttt{kernel/fs.h} là \texttt{BSIZE = 1024}
 
 Mỗi vòng lặp đọc tối đa 512 byte từ nguồn. Sau đó, vòng lặp ghi dùng \code{total\_written} để theo dõi số byte đã ghi và tiếp tục ghi phần còn lại nếu cần. Chương trình chỉ đọc buffer tiếp theo sau khi đã ghi đủ số byte vừa đọc. Vì dùng số byte do \code{read()} trả về, lần đọc cuối không cần đủ 512 byte và tệp rỗng cũng được xử lý.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/cp_flow.pdf}
+    \caption{Kiểm tra đầu vào và sao chép theo buffer trong \texttt{cp.c}}
+    \label{fig:cp_flow}
+\end{figure}
 
 \subsection{Xử lý lỗi và giới hạn}
 \begin{itemize}

@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="780" viewBox="0 0 960 780">
+  <defs>
+    <style>
+      text{font-family:"Latin Modern Roman",Cambria,Georgia,"Times New Roman",serif;fill:#1a1a1a}
+      .title{font-size:18px;font-style:italic;font-weight:bold;fill:#5b4a72}
+      .heading{font-size:16px;font-weight:bold}
+      .body{font-size:15px}
+      .small{font-size:13px;fill:#526071}
+      .code{font-family:"DejaVu Sans Mono",monospace;font-size:13px}
+      .arrow{fill:none;stroke:#2b2b2b;stroke-width:1.5;marker-end:url(#arrow)}
+      .err{fill:none;stroke:#a34444;stroke-width:1.3;stroke-dasharray:4 3;marker-end:url(#red)}
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7Z" fill="#2b2b2b"/></marker>
+    <marker id="red" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7Z" fill="#a34444"/></marker>
+  </defs>
+  <rect x="12" y="10" width="936" height="758" rx="12" fill="#fdfdfe" stroke="#c3aedb" stroke-width="1.2"/>
+  <text x="30" y="38" class="title">Cp — kiểm tra an toàn và sao chép từng khối dữ liệu</text>
+  <text x="35" y="68" class="heading">1. Chuẩn bị và kiểm tra trước khi ghi đè</text>
+  <rect x="35" y="84" width="190" height="98" rx="7" fill="#e3f0e6" stroke="#5f8a6b"/>
+  <text x="130" y="109" text-anchor="middle" class="heading">Tham số dòng lệnh</text>
+  <text x="130" y="133" text-anchor="middle" class="code">main(): args == 3</text>
+  <text x="130" y="159" text-anchor="middle" class="code">cp(src, dst)</text>
+  <path d="M225 133 H255" class="arrow"/>
+  <rect x="258" y="84" width="205" height="98" rx="7" fill="#fdf6d5" stroke="#c9b043"/>
+  <text x="360" y="109" text-anchor="middle" class="heading">Kiểm tra nguồn</text>
+  <text x="360" y="133" text-anchor="middle" class="code">open(src, O_RDONLY)</text>
+  <text x="360" y="157" text-anchor="middle" class="small">fstat(): từ chối T_DIR</text>
+  <path d="M463 133 H493" class="arrow"/>
+  <rect x="496" y="84" width="205" height="98" rx="7" fill="#fdf6d5" stroke="#c9b043"/>
+  <text x="598" y="109" text-anchor="middle" class="heading">Kiểm tra đích nếu có</text>
+  <text x="598" y="133" text-anchor="middle" class="small">stat(dst, &amp;destination_stat)</text>
+  <text x="598" y="155" text-anchor="middle" class="small">Từ chối T_DIR hoặc cùng</text>
+  <text x="598" y="172" text-anchor="middle" class="small">cặp (dev, ino) với nguồn</text>
+  <path d="M701 133 H731" class="arrow"/>
+  <rect x="734" y="84" width="191" height="98" rx="7" fill="#e3f0e6" stroke="#5f8a6b"/>
+  <text x="829" y="109" text-anchor="middle" class="heading">Mở / tạo đích</text>
+  <text x="829" y="133" text-anchor="middle" class="code">O_WRONLY | O_CREATE</text>
+  <text x="829" y="155" text-anchor="middle" class="code">| O_TRUNC</text>
+  <text x="829" y="172" text-anchor="middle" class="small">Xóa nội dung cũ</text>
+  <text x="35" y="207" class="small">Đích chưa tồn tại: stat() thất bại vẫn cho phép thử open() với O_CREATE.</text>
+  <text x="35" y="230" class="heading">2. Vòng lặp đọc — ghi (một tiến trình, không dùng pipe)</text>
+  <path d="M829 182 V250 H480 V271" class="arrow"/>
+  <rect x="45" y="274" width="160" height="54" rx="7" fill="#e3f0e6" stroke="#5f8a6b"/>
+  <text x="125" y="296" text-anchor="middle" class="heading">File nguồn</text>
+  <text x="125" y="316" text-anchor="middle" class="code">source</text>
+  <path d="M205 301 H324" class="arrow"/>
+  <text x="262" y="291" text-anchor="middle" class="small">read()</text>
+  <rect x="327" y="274" width="306" height="54" rx="7" fill="#e5edf8" stroke="#7f93b8"/>
+  <text x="480" y="296" text-anchor="middle" class="heading">buffer[512]</text>
+  <text x="480" y="316" text-anchor="middle" class="small">n = bytes_read: số byte read() trả về</text>
+  <path d="M633 301 H752" class="arrow"/>
+  <text x="693" y="291" text-anchor="middle" class="small">write()</text>
+  <rect x="755" y="274" width="160" height="54" rx="7" fill="#e3f0e6" stroke="#5f8a6b"/>
+  <text x="835" y="296" text-anchor="middle" class="heading">File đích</text>
+  <text x="835" y="316" text-anchor="middle" class="code">destination</text>
+  <path d="M480 328 V348" class="arrow"/>
+  <path d="M480 350 L568 389 L480 428 L392 389 Z" fill="#ece6f4" stroke="#9c84bb"/>
+  <text x="480" y="394" text-anchor="middle" class="body">Kết quả đọc n?</text>
+  <path d="M392 389 H190 V481" class="err"/>
+  <text x="280" y="378" text-anchor="middle" class="small">n &lt; 0: lỗi đọc</text>
+  <path d="M568 389 H809 V481" class="arrow"/>
+  <text x="699" y="378" text-anchor="middle" class="small">n = 0: EOF</text>
+  <path d="M480 428 V467" class="arrow"/>
+  <text x="499" y="451" class="small">n &gt; 0</text>
+  <rect x="310" y="470" width="340" height="127" rx="7" fill="#fdf6d5" stroke="#c9b043"/>
+  <text x="480" y="494" text-anchor="middle" class="heading">Ghi hết khối vừa đọc</text>
+  <text x="480" y="516" text-anchor="middle" class="code">total_written = 0</text>
+  <text x="480" y="540" text-anchor="middle" class="small">Ghi từ buffer + total_written</text>
+  <text x="480" y="560" text-anchor="middle" class="small">Số byte còn lại: n − total_written</text>
+  <text x="480" y="583" text-anchor="middle" class="small">Cộng số byte đã ghi; lặp đến khi đủ n</text>
+  <rect x="35" y="484" width="245" height="92" rx="7" fill="#fadcdc" stroke="#c08484"/>
+  <text x="157" y="510" text-anchor="middle" class="heading">Báo lỗi</text>
+  <text x="157" y="535" text-anchor="middle" class="small">Đóng các FD đang mở</text>
+  <text x="157" y="558" text-anchor="middle" class="code">exit(1)</text>
+  <path d="M310 548 H280" class="err"/>
+  <text x="180" y="602" text-anchor="middle" class="small">Ghi trả ≤ 0: dừng, không lặp vô hạn</text>
+  <rect x="700" y="484" width="220" height="92" rx="7" fill="#e3f0e6" stroke="#5f8a6b"/>
+  <text x="810" y="510" text-anchor="middle" class="heading">Hoàn tất</text>
+  <text x="810" y="535" text-anchor="middle" class="small">Đóng nguồn và đích</text>
+  <text x="810" y="558" text-anchor="middle" class="code">exit(0)</text>
+  <path d="M480 597 V628 H670 V344 H605 V329" class="arrow"/>
+  <text x="480" y="649" text-anchor="middle" class="small">Ghi đủ n byte → đọc khối tiếp theo; không ghi toàn bộ buffer nếu n &lt; 512.</text>
+  <rect x="35" y="670" width="890" height="77" rx="7" fill="#f3f5fa" stroke="#a2b0c6"/>
+  <text x="52" y="694" class="small">Lỗi mở / kiểm tra hoặc đầu vào bị từ chối ở bước 1: báo lỗi, đóng FD đang mở, exit(1).</text>
+  <text x="52" y="715" class="small">Kiểm tra cùng file phải trước O_TRUNC; giả định đường dẫn không bị thay đổi đồng thời.</text>
+  <text x="52" y="736" class="small">Lỗi sau khi ghi đè: đích có thể chứa dữ liệu dở; chương trình không khôi phục nội dung cũ.</text>
+</svg>
