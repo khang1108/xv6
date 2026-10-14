@@ -1,0 +1,108 @@
+\section{PingPong (pingpong.c)}
+
+\subsection{Cách thực hiện}
+Chương trình dùng hai pipe để trao đổi một byte giữa tiến trình cha và con. Mỗi pipe chỉ truyền dữ liệu theo một chiều: đầu \texttt{[0]} dùng để đọc và đầu \texttt{[1]} dùng để ghi \cite{xv6book}.
+
+Cha tạo \code{parent\_to\_child} và \code{child\_to\_parent}, sau đó gọi \code{fork()}. Cha gửi byte \code{'p'} qua pipe thứ nhất rồi chờ phản hồi qua pipe thứ hai. Con nhận byte, in \texttt{<pid>: received ping}, gửi lại byte vừa nhận và thoát. Cha nhận phản hồi, in \texttt{<pid>: received pong}, rồi gọi \code{wait(\&status\_child)} để thu hồi con.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/pingpong_flow.pdf}
+    \caption{Luồng trao đổi một byte và quản lý tài nguyên trong \texttt{pingpong.c}}
+    \label{fig:pingpong_flow}
+\end{figure}
+
+Ngay sau \code{fork()}, mỗi tiến trình đóng các đầu pipe không sử dụng:
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabularx}{\textwidth}{lXX}
+        \toprule
+        Pipe & Cha giữ & Con giữ \\
+        \midrule
+        \texttt{parent\_to\_child} & Đầu ghi \texttt{[1]} & Đầu đọc \texttt{[0]} \\
+        \texttt{child\_to\_parent} & Đầu đọc \texttt{[0]} & Đầu ghi \texttt{[1]} \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Các đầu pipe được sử dụng sau khi tạo tiến trình con}
+\end{table}
+
+Con in thông báo trước khi gửi phản hồi, còn cha chỉ in sau khi đọc được phản hồi. Vì vậy, trong luồng chạy thành công, dòng \texttt{received ping} xuất hiện trước dòng \texttt{received pong}, không phụ thuộc tiến trình nào được lập lịch trước.
+
+\subsection{Xử lý lỗi và tài nguyên}
+Chương trình kiểm tra kết quả tạo pipe và \code{fork()}. Nếu tạo pipe thứ hai thất bại, chương trình đóng hai đầu của pipe thứ nhất; nếu \code{fork()} thất bại, chương trình đóng cả bốn đầu pipe trước khi thoát với mã lỗi 1.
+
+Các lần \code{read()} và \code{write()} đều yêu cầu đúng một byte. Giá trị trả về khác 1 được xem là trao đổi thất bại. Cha chỉ trả về mã thành công khi nhận đủ một byte và con kết thúc với trạng thái 0.
+
+Việc đóng đầu ghi thừa giúp bên đọc nhận được EOF khi bên gửi đã kết thúc và dữ liệu trong pipe đã được đọc hết. Với yêu cầu đọc một byte ở bài này, nếu vẫn còn đầu ghi mở mà pipe không có dữ liệu, \code{read()} sẽ chờ. EOF được biểu hiện bằng giá trị trả về 0, không phải một tín hiệu ngắt.
+
+Trong xv6, \code{exit()} tự đóng các file descriptor còn mở của tiến trình. Vì vậy, những nhánh lỗi thoát ngay mà chưa đóng tường minh từng FD không gây rò rỉ FD sau khi tiến trình kết thúc. Các lệnh \code{close()} trong chương trình giúp thể hiện rõ thời điểm không còn cần một đầu pipe.
+
+Trong luồng thành công, \code{wait()} thu hồi tài nguyên của con trước khi cha thoát. Con có thể tạm thời ở trạng thái \texttt{ZOMBIE} từ lúc kết thúc đến khi được thu hồi. Riêng nhánh cha gửi byte thất bại, cha gọi \code{exit(1)} ngay, không gọi \code{wait()}; con được chuyển cho tiến trình \texttt{init} thu hồi.
+
+\subsection{Kiểm thử và kết quả mong đợi}
+Khi chạy \code{pingpong} trên shell xv6, kết quả mong đợi gồm hai dòng:
+\begin{figure}[H]
+    \includegraphics[width=0.5\textwidth]{images/pingpong.png}
+    \caption{Kết quả chạy \texttt{pingpong} trên shell xv6}
+    \label{fig:pingpong}
+\end{figure}
+
+\newpage
+\section{Copy file cơ bản - cp (cp.c)}
+
+\subsection{Cách thực hiện}
+Lệnh có cú pháp \code{cp src dst}. Hàm \code{main()} yêu cầu đúng hai đối số ngoài tên chương trình; nếu không đúng, chương trình in \texttt{usage: cp src dst} và thoát với mã lỗi 1.
+
+Hàm \code{cp()} mở nguồn bằng \code{O\_RDONLY}, lấy thông tin nguồn bằng \code{fstat()} và từ chối nguồn là thư mục. Nếu lấy được thông tin đích bằng \code{stat()}, chương trình từ chối đích là thư mục và kiểm tra nguồn, đích có cùng cặp \texttt{(dev, ino)} hay không. Kiểm tra này được thực hiện trước khi mở đích để tránh xóa nội dung nguồn khi hai đường dẫn cùng trỏ tới một tệp
+
+Sau các kiểm tra, chương trình mở đích với các cờ \code{O\_WRONLY | O\_CREATE | O\_TRUNC}. Tệp đích được tạo nếu chưa tồn tại; nếu đã là tệp thường, nội dung cũ bị xóa để ghi nội dung mới \cite{xv6book}.
+
+Chương trình dùng buffer 512 byte theo gợi ý của đề. Đây là kích thước buffer ở user space; kích thước block của hệ thống tệp trong \texttt{kernel/fs.h} là \texttt{BSIZE = 1024}
+
+Mỗi vòng lặp đọc tối đa 512 byte từ nguồn. Sau đó, vòng lặp ghi dùng \code{total\_written} để theo dõi số byte đã ghi và tiếp tục ghi phần còn lại nếu cần. Chương trình chỉ đọc buffer tiếp theo sau khi đã ghi đủ số byte vừa đọc. Vì dùng số byte do \code{read()} trả về, lần đọc cuối không cần đủ 512 byte và tệp rỗng cũng được xử lý.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/cp_flow.pdf}
+    \caption{Kiểm tra đầu vào và sao chép theo buffer trong \texttt{cp.c}}
+    \label{fig:cp_flow}
+\end{figure}
+
+\subsection{Xử lý lỗi và giới hạn}
+\begin{itemize}
+    \item Nếu mở nguồn, lấy thông tin nguồn hoặc mở đích thất bại, chương trình báo lỗi và thoát với mã 1. Khi mở đích thất bại, chỉ FD nguồn cần được đóng vì chưa có FD đích hợp lệ.
+    \item Nếu đọc trả về số âm hoặc ghi trả về giá trị không dương, chương trình báo lỗi, đóng cả hai FD và thoát với mã 1. Đọc trả về 0 được xem là EOF bình thường; chương trình đóng hai FD và thoát với mã 0.
+    \item Vòng lặp ghi có xử lý giá trị trả về dương nhỏ hơn số byte yêu cầu. Tuy nhiên, với tệp thường trong phiên bản xv6 này, \texttt{filewrite()} trả về đủ số byte yêu cầu hoặc \texttt{-1}; khi báo lỗi, một phần dữ liệu vẫn có thể đã được ghi vào đích.
+    \item Nếu lỗi I/O xảy ra sau khi mở đích, chương trình không khôi phục nội dung đích cũ và có thể để lại tệp sao chép dở. Báo lỗi và không khôi phục dữ liệu được
+    \item Kiểm tra cùng tệp bằng \texttt{(dev, ino)} xử lý các đường dẫn ổn định. Chương trình chưa bảo vệ trường hợp tiến trình khác thay đổi đường dẫn đích giữa bước kiểm tra và bước mở đích.
+\end{itemize}
+
+\subsection{Kiểm thử và kết quả mong đợi}
+Bảng dưới đây liệt kê các trường hợp cần kiểm tra trên xv6. Đây là kết quả mong đợi từ cách triển khai:
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabularx}{\textwidth}{p{0.38\textwidth}>{\raggedright\arraybackslash}X}
+        \toprule
+        Kiểm thử & Kết quả mong đợi \\
+        \midrule
+        \texttt{echo hello > a}, \texttt{cp a b}, \texttt{cat b} & In \texttt{hello} (sao chép thành công). \\
+        \texttt{cp a} & In \texttt{usage: cp src dst} (thiếu tham số). \\
+        \texttt{cp nofile out} & In \texttt{cp: cannot open nofile} (nguồn không tồn tại). \\
+        \texttt{cp . a} & In \texttt{cp: source is a directory: .} (nguồn là thư mục). \\
+        \texttt{cp a a} & In \texttt{cp: source and destination are the same file} (nguồn và đích trùng nhau). \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Các trường hợp cần kiểm tra chức năng của lệnh \texttt{cp}}
+    \label{tab:cp_tests}
+\end{table}
+
+\begin{figure}[H]
+
+    \includegraphics[width=0.6\textwidth]{images/cp.png}
+    \caption{Kết quả chạy lệnh \texttt{cp} trên shell xv6}
+    \label{fig:cp}
+\end{figure}
+

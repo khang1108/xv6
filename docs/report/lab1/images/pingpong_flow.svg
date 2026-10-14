@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="650" viewBox="0 0 960 650">
+  <defs>
+    <style>
+      text{font-family:"Latin Modern Roman",Cambria,Georgia,"Times New Roman",serif;fill:#1a1a1a}
+      .title{font-size:18px;font-style:italic;font-weight:bold;fill:#5b4a72}
+      .heading{font-size:17px;font-weight:bold}
+      .body{font-size:15px}
+      .small{font-size:13px;fill:#526071}
+      .code{font-family:"DejaVu Sans Mono",monospace;font-size:13px}
+      .arrow{fill:none;stroke:#2b2b2b;stroke-width:1.5;marker-end:url(#arrow)}
+      .pipe{fill:none;stroke:#426991;stroke-width:2;marker-end:url(#blue)}
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7Z" fill="#2b2b2b"/></marker>
+    <marker id="blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7Z" fill="#426991"/></marker>
+  </defs>
+  <rect x="12" y="10" width="936" height="628" rx="12" fill="#fdfdfe" stroke="#c3aedb" stroke-width="1.2"/>
+  <text x="30" y="38" class="title">Pingpong — trao đổi một byte qua hai pipe (luồng thành công)</text>
+  <rect x="255" y="54" width="450" height="46" rx="7" fill="#ece6f4" stroke="#9c84bb"/>
+  <text x="480" y="74" text-anchor="middle" class="body">Tạo parent_to_child và child_to_parent</text>
+  <text x="480" y="92" text-anchor="middle" class="code">fork()</text>
+  <path d="M480 100 V112 H220 V126" class="arrow"/>
+  <path d="M480 112 H740 V126" class="arrow"/>
+  <rect x="35" y="128" width="355" height="366" rx="9" fill="#e3f0e6" stroke="#5f8a6b" stroke-width="1.2"/>
+  <rect x="570" y="128" width="355" height="366" rx="9" fill="#fdf6d5" stroke="#c9b043" stroke-width="1.2"/>
+  <text x="212" y="155" text-anchor="middle" class="heading">Tiến trình cha — fork() trả PID con</text>
+  <text x="747" y="155" text-anchor="middle" class="heading">Tiến trình con — fork() trả 0</text>
+  <text x="212" y="180" text-anchor="middle" class="small">Đóng p_to_c[0] và c_to_p[1]</text>
+  <text x="747" y="180" text-anchor="middle" class="small">Đóng p_to_c[1] và c_to_p[0]</text>
+  <line x1="50" y1="192" x2="375" y2="192" stroke="#5f8a6b" stroke-dasharray="3 3"/>
+  <line x1="585" y1="192" x2="910" y2="192" stroke="#c9b043" stroke-dasharray="3 3"/>
+  <rect x="62" y="208" width="300" height="46" rx="5" fill="white" stroke="#5f8a6b"/>
+  <text x="212" y="227" text-anchor="middle" class="code">write(p_to_c[1], &amp;byte, 1)</text>
+  <text x="212" y="246" text-anchor="middle" class="small">Sau khi gửi: close(p_to_c[1])</text>
+  <rect x="597" y="208" width="300" height="46" rx="5" fill="white" stroke="#c9b043"/>
+  <text x="747" y="227" text-anchor="middle" class="code">read(p_to_c[0], &amp;byte, 1)</text>
+  <text x="747" y="246" text-anchor="middle" class="small">Sau khi nhận: close(p_to_c[0])</text>
+  <path d="M362 231 H597" class="pipe"/>
+  <text x="480" y="217" text-anchor="middle" class="small">p_to_c: 1 byte 'p'</text>
+  <path d="M747 254 V273" class="arrow"/>
+  <rect x="597" y="275" width="300" height="33" rx="5" fill="#fadcdc" stroke="#c08484"/>
+  <text x="747" y="297" text-anchor="middle" class="body">In: &lt;pid_con&gt;: received ping</text>
+  <path d="M747 308 V325" class="arrow"/>
+  <path d="M212 254 V325" class="arrow"/>
+  <rect x="62" y="328" width="300" height="46" rx="5" fill="white" stroke="#5f8a6b"/>
+  <text x="212" y="347" text-anchor="middle" class="code">read(c_to_p[0], &amp;byte, 1)</text>
+  <text x="212" y="366" text-anchor="middle" class="small">Sau khi nhận: close(c_to_p[0])</text>
+  <rect x="597" y="328" width="300" height="46" rx="5" fill="white" stroke="#c9b043"/>
+  <text x="747" y="347" text-anchor="middle" class="code">write(c_to_p[1], &amp;byte, 1)</text>
+  <text x="747" y="366" text-anchor="middle" class="small">Sau khi gửi: close(c_to_p[1])</text>
+  <path d="M597 351 H362" class="pipe"/>
+  <text x="480" y="337" text-anchor="middle" class="small">c_to_p: 1 byte phản hồi</text>
+  <path d="M212 374 V391" class="arrow"/>
+  <rect x="62" y="394" width="300" height="33" rx="5" fill="#fadcdc" stroke="#c08484"/>
+  <text x="212" y="416" text-anchor="middle" class="body">In: &lt;pid_cha&gt;: received pong</text>
+  <path d="M747 374 V397" class="arrow"/>
+  <rect x="652" y="400" width="190" height="31" rx="5" fill="#fff" stroke="#c9b043"/>
+  <text x="747" y="421" text-anchor="middle" class="code">exit(0)</text>
+  <path d="M212 427 V446" class="arrow"/>
+  <rect x="62" y="449" width="300" height="31" rx="5" fill="#d0e6d5" stroke="#5f8a6b"/>
+  <text x="212" y="470" text-anchor="middle" class="code">wait(&amp;status_child) → exit(0)</text>
+  <path d="M747 431 V464 H362" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="535" y="452" text-anchor="middle" class="small">Chờ và thu hồi con</text>
+  <rect x="35" y="510" width="890" height="109" rx="7" fill="#f3f5fa" stroke="#a2b0c6"/>
+  <text x="53" y="535" class="body">p_to_c = parent_to_child; c_to_p = child_to_parent; [0] đọc, [1] ghi.</text>
+  <text x="53" y="558" class="body">read() chờ khi pipe rỗng và còn đầu ghi mở; wait() chờ con kết thúc.</text>
+  <text x="53" y="581" class="body">“received ping” luôn trước “received pong”; con thoát trước hay sau dòng pong đều có thể.</text>
+  <text x="53" y="604" class="small">Cha exit(0) sau wait() thành công khi received == 1 và status_child == 0; nếu không, exit(1).</text>
+</svg>
