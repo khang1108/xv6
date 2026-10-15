@@ -7,9 +7,9 @@ Cha tạo \code{parent\_to\_child} và \code{child\_to\_parent}, sau đó gọi 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{images/pingpong_flow.pdf}
-    \caption{Luồng trao đổi một byte và quản lý tài nguyên trong \texttt{pingpong.c}}
-    \label{fig:pingpong_flow}
+    \includegraphics[width=0.82\textwidth]{images/pingpong_workflow.pdf}
+    \caption{Sơ đồ luồng tương tác IPC qua hai pipe và thu hồi tiến trình con trong \texttt{pingpong.c}}
+    \label{fig:pingpong_workflow}
 \end{figure}
 
 Ngay sau \code{fork()}, mỗi tiến trình đóng các đầu pipe không sử dụng:
@@ -64,9 +64,9 @@ Mỗi vòng lặp đọc tối đa 512 byte từ nguồn. Sau đó, vòng lặp 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{images/cp_flow.pdf}
-    \caption{Kiểm tra đầu vào và sao chép theo buffer trong \texttt{cp.c}}
-    \label{fig:cp_flow}
+    \includegraphics[width=0.82\textwidth]{images/cp_workflow.pdf}
+    \caption{Sơ đồ luồng kiểm tra inode và sao chép dữ liệu theo bộ đệm trong \texttt{cp.c}}
+    \label{fig:cp_workflow}
 \end{figure}
 
 \subsection{Xử lý lỗi và giới hạn}

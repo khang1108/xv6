@@ -1,0 +1,77 @@
+\section{diff.c}
+
+\subsection{Tổng quan}
+\texttt{diff.c} được hiện thực nhằm so sánh hai tập tin văn bản theo từng dòng chuẩn POSIX \cite{posix2018diff}, dựa trên nguyên lý so khớp chuỗi ký tự trong các hệ thống Unix \cite{hunt1976algorithm}. Mục tiêu chính là phát hiện vị trí chênh lệch, in chi tiết nội dung phân kỳ hoặc ngắt nhanh để kiểm tra tính toàn vẹn của tệp tin.
+
+Trong hệ điều hành xv6, thư viện chuẩn không hỗ trợ các hàm đọc dòng như \texttt{getline()} hay \texttt{fgets()} \cite{xv6book}. Do đó, nhóm đã tự xây dựng hàm \code{readline()} đọc trực tiếp từng byte từ file descriptor kết hợp với kỹ thuật cấp phát bộ đệm tự co giãn trên heap.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{images/diff_workflow.pdf}
+    \caption{Sơ đồ luồng thực thi (Workflow) và cơ chế so khớp dòng trong \texttt{diff.c}}
+    \label{fig:diff_workflow}
+\end{figure}
+
+\noindent Luồng thực thi diễn ra tuần tự qua các giai đoạn:
+\begin{itemize}[noitemsep, topsep=2pt]
+    \item \textbf{Khởi tạo và kiểm tra tệp:} Phân tích đối số dòng lệnh, mở \code{fd1}, \code{fd2} với cờ \code{O\_RDONLY} và dùng \code{fstat()} kiểm tra cả hai đều là tệp thường (\code{st.type == T\_FILE}), tránh đọc nhầm vào thư mục hay thiết bị.
+    \item \textbf{Đọc dòng song song và cấp phát động:} Khởi tạo hai bộ đệm độc lập $128\text{ bytes}$. Khi dòng vượt sức chứa (\code{len + 1 >= cap}), bộ đệm tự nhân đôi dung lượng qua \code{malloc()} và \code{memmove()}, giải phóng vùng nhớ cũ an toàn.
+    \item \textbf{So khớp và in kết quả:} Tại mỗi bước lặp, so sánh chiều dài, cờ \code{has\_newline} và gọi \code{strcmp()}. Nếu khác biệt, hàm \code{print\_line()} in tiền tố \code{<} cho tệp 1 và \code{>} cho tệp 2 kèm chỉ số dòng hiện hành.
+\end{itemize}
+
+\subsection{Khó khăn và Thử thách}
+Dựa trên kiến trúc của hệ điều hành xv6 và các trường hợp phức tạp khi xử lý tệp văn bản \cite{xv6book}, nhóm nhận thấy các khó khăn như sau:
+
+\begin{enumerate}[noitemsep, topsep=2pt]
+    \item \textbf{Xử lý lệch số dòng giữa hai tệp:}
+    Khi hai tệp lệch số dòng, một bên sẽ gặp EOF (\code{len == 0}) trước. Cách so sánh thông thường dễ đọc dữ liệu rác hoặc dừng sớm làm sót nội dung chênh lệch ở tệp dài hơn. \\
+    \textit{Giải pháp:} Hàm \code{print\_line()} hỗ trợ nhận con trỏ rỗng (\code{line == 0}). Khi một tệp hết trước, chương trình in chuỗi chuẩn \code{EOF} (ví dụ \texttt{f1:4: < EOF}), đồng thời duy trì vòng lặp đọc và in dữ liệu thực tế của tệp còn lại cho đến khi cả hai kết thúc hoàn toàn.
+
+    \item \textbf{Xử lý dòng cuối thiếu ký tự ngắt dòng:}
+    Tệp tin thiếu ký tự \code{'\textbackslash{}n'} ở dòng cuối có thể làm ghép sai nội dung theo chuẩn POSIX. \\
+    \textit{Giải pháp:} Hàm \code{readline()} quản lý cờ trạng thái \code{has\_newline}. Nếu dòng cuối không chứa \code{'\textbackslash{}n'}, chương trình chủ động ngắt dòng và in cảnh báo: \texttt{diff: <file>:<line>: no newline at end of file}.
+
+    \item \textbf{Tối ưu cờ ngắt nhanh (\code{-q}) và mã thoát:}
+    Trong kiểm thử tự động, chương trình chỉ cần kết luận hai tệp có tương đương hay không mà không cần tiêu tốn I/O để in chi tiết. \\
+    \textit{Giải pháp:} Khi bật cờ \code{-q}, chương trình ngắt vòng lặp ngay tại chênh lệch đầu tiên (\code{is\_diff = 1}) và in \texttt{diff: files differ}. Toàn bộ bộ đệm động và FD đều được giải phóng trước khi thoát. Chương trình trả về mã thoát chuẩn: \code{exit(0)} (trùng khớp), \code{exit(1)} (khác biệt) và \code{exit(2)} (lỗi I/O).
+\end{enumerate}
+
+\newpage
+
+\section{du.c}
+
+\subsection{Tổng quan}
+\texttt{du.c} (\textit{Disk Usage}) mô phỏng tiện ích cốt lõi trên các hệ điều hành họ Unix theo chuẩn POSIX \cite{posix2018du}, hỗ trợ ước tính dung lượng chiếm dụng của cây thư mục và tập tin bằng thuật toán duyệt đệ quy hậu thứ tự (\textit{post-order bottom-up traversal}). Tổng dung lượng của một thư mục được định nghĩa bằng tổng dung lượng thực tế của tất cả các tệp tin và cây con bên trong nó.
+
+Trong hệ thống tệp xv6 \cite{xv6book}, một thư mục được tổ chức như một tập tin đặc biệt chứa danh sách các bản ghi \texttt{struct dirent} ($16\text{ bytes}$ gồm $2\text{ bytes}$ chỉ mục \texttt{inum} và $14\text{ bytes}$ tên \texttt{name}). Kích thước byte thực tế \texttt{st.size} của từng inode được truy xuất chính xác thông qua lời gọi hệ thống \code{stat()}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.70\textwidth]{images/du_workflow.pdf}
+    \caption{Sơ đồ luồng thực thi (Workflow) duyệt đệ quy Bottom-up và giải phóng FD sớm trong \texttt{du.c}}
+    \label{fig:du_workflow}
+\end{figure}
+
+\noindent Luồng thực thi diễn ra tuần tự qua các giai đoạn:
+\begin{itemize}[noitemsep, topsep=2pt]
+    \item \textbf{Khởi tạo và phân tích đối số:} Tiếp nhận đường dẫn mục tiêu (mặc định là \code{"."}), phân tích cờ tóm tắt \code{-s} (chỉ in kích thước thư mục gốc) và cờ chi tiết \code{-a} (in toàn bộ kích thước tệp tin đơn lẻ lẫn thư mục con).
+    \item \textbf{Điều kiện dừng (Base Case):} Sử dụng \code{stat(path, \&st)}. Nếu đường dẫn trỏ tới một tệp tin thường (\code{T\_FILE}) hoặc tệp thiết bị (\code{T\_DEVICE}), kích thước \code{st.size} được trả về ngay lập tức; đồng thời in thông tin ra màn hình nếu đường dẫn là gốc được chỉ định hoặc có cờ \code{-a} (\code{is\_root || (a \&\& !s)}).
+    \item \textbf{Duyệt con và cộng dồn (Bottom-up):} Khi gặp thư mục (\code{T\_DIR}), chương trình quét nội dung thư mục, lưu danh sách các tên tệp con hợp lệ, tiến hành gọi đệ quy \code{du(buf, a, s, 0)} cho từng nhánh con và cộng dồn vào biến \code{total\_size}. Thư mục hoàn thành đệ quy sẽ in kích thước tích lũy của chính nó trước khi trả kết quả về cho thư mục cha.
+\end{itemize}
+
+\subsection{Khó khăn và Thử thách}
+Dựa trên kiến trúc của hệ điều hành xv6 và các ca biên trong quản lý tệp tin \cite{xv6book}, nhóm nhận thấy các khó khăn như sau:
+
+\begin{enumerate}[noitemsep, topsep=2pt]
+    \item \textbf{Giới hạn File Descriptor (\code{NOFILE = 16}):}
+    Trong kernel xv6, mỗi tiến trình bị giới hạn mở tối đa 16 file descriptors đồng thời (\code{NOFILE = 16} trong \texttt{kernel/param.h}) \cite{xv6book}. Nếu duy trì \code{fd} của thư mục đang mở trong suốt các lời gọi đệ quy sâu, hệ thống sẽ nhanh chóng cạn kiệt FD khi độ sâu thư mục vượt quá ngưỡng cho phép, gây lỗi sập chương trình. \\
+    \textit{Giải pháp:} Đọc toàn bộ tên các mục con vào mảng động \code{names} trên bộ nhớ heap, sau đó thực hiện lệnh \code{close(fd)} ngay lập tức trước khi bắt đầu bất kỳ lời gọi đệ quy con nào. Kỹ thuật này giúp số lượng FD mở tại mỗi thời điểm chỉ là $O(1)$ (tối đa 1 FD trong lúc đọc), bảo đảm an toàn với mọi độ sâu cấu trúc thư mục.
+
+    \item \textbf{Phòng chống lặp vô hạn và lọc Inode rác:}
+    Mọi thư mục Unix đều chứa hai thực thể liên kết cứng đặc thù là \texttt{"."} (thư mục hiện hành) và \texttt{".."} (thư mục cha). Ngoài ra, các entry đã xóa trong xv6 vẫn tồn tại trong bảng chỉ mục với \code{inum == 0}. \\
+    \textit{Giải pháp:} Chủ động loại bỏ các khối có \code{de.inum == 0} và kiểm tra lọc bỏ chuỗi \texttt{"."} cùng \texttt{".."}, tránh hoàn toàn nguy cơ lặp đệ quy vô hạn làm tràn stack kernel và đảm bảo tính chính xác của phép cộng dồn dung lượng.
+
+    \item \textbf{Quản lý bộ nhớ mảng động và kiểm soát đường dẫn:}
+    Số lượng phần tử trong một thư mục là biến thiên và không thể biết trước, trong khi việc ghép nối chuỗi đường dẫn đệ quy tiềm ẩn nguy cơ tràn mảng đệm. \\
+    \textit{Giải pháp:} Khởi tạo mảng con trỏ \code{names} ban đầu với sức chứa 16 phần tử, tự động tăng gấp đôi kích thước (\code{capacity * 2}) qua \code{malloc()} và \code{memmove()} khi danh sách vượt ngưỡng. Đồng thời, trước khi ghép chuỗi đường dẫn con, chương trình luôn kiểm tra điều kiện an toàn: \code{strlen(path) + 1 + strlen(names[i]) < sizeof(buf)} và giải phóng vùng nhớ sau khi sử dụng.
+\end{enumerate}

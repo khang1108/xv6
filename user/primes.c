@@ -22,9 +22,19 @@ __attribute__((noreturn)) void filter(int left_fd){
 
     // Tạo ống mới, phục vụ cho việc ghi
     int new_pipe[2];
-    pipe(new_pipe);
+    if(pipe(new_pipe) < 0){
+        fprintf(2, "primes: pipe failed\n");
+        close(left_fd);
+        exit(1);
+    }
 
     int pid = fork();
+    if(pid < 0){
+        fprintf(2, "primes: fork failed\n");
+        close(left_fd);
+        close(new_pipe[0]), close(new_pipe[1]);
+        exit(1);
+    }
 
     if(pid == 0){
         // Vì đây là process con, nó chỉ việc đọc dữ liệu từ ống mới
@@ -39,12 +49,26 @@ __attribute__((noreturn)) void filter(int left_fd){
     else{
         close(new_pipe[0]);
 
-        int n;
-        while(read(left_fd, &n, sizeof(int))){
+        int n, bytes_read;
+        while((bytes_read = read(left_fd, &n, sizeof(int))) == sizeof(int)){
             if(n % p != 0){
-                write(new_pipe[1], &n, sizeof(int));
+                if(write(new_pipe[1], &n, sizeof(int)) < 0){
+                    fprintf(2, "primes: write failed\n");
+                    close(left_fd);
+                    close(new_pipe[1]);
+                    exit(1);
+                }
             }
         }
+
+        if(bytes_read < 0){
+            fprintf(2, "primes: read failed\n");
+            close(left_fd);
+            close(new_pipe[1]);
+            exit(1);
+        }
+
+        close(left_fd);
         close(new_pipe[1]);
         wait(0);
         exit(0);
@@ -54,11 +78,19 @@ __attribute__((noreturn)) void filter(int left_fd){
 int main(int argc, char *argv[])
 {
     int fd[2];
-    pipe(fd);
+    if(pipe(fd) < 0){
+        fprintf(2, "primes: pipe failed\n");
+        exit(1);
+    }
 
     // Cần chia 2 process song song tránh tình trạng tràn bộ nhớ vì nó chỉ có 512 bytes
     // Nêu đẩy hết từ `2->280` gồm 1116 bytes -> bị tràn RAM
     int pid = fork();
+    if(pid < 0){
+        fprintf(2, "primes: fork failed\n");
+        close(fd[0]), close(fd[1]);
+        exit(1);
+    }
     if(pid == 0){
         // Chỉ đọc không ghi
         close(fd[1]);
@@ -67,7 +99,11 @@ int main(int argc, char *argv[])
     else{
         close(fd[0]);
         for(int i = 2; i <= 280; i++){
-            write(fd[1], &i, sizeof(int));
+            if(write(fd[1], &i, sizeof(int)) < 0){
+                fprintf(2, "primes: write failed\n");
+                close(fd[1]);
+                exit(1);
+            }
         }
         close(fd[1]);
         wait(0);

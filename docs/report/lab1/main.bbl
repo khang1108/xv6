@@ -7,7 +7,8 @@
 \providecommand{\BIBentrySTDinterwordspacing}{\spaceskip=0pt\relax}
 \providecommand{\BIBentryALTinterwordstretchfactor}{4}
 \providecommand{\BIBentryALTinterwordspacing}{\spaceskip=\fontdimen2\font plus
-\BIBentryALTinterwordstretchfactor\fontdimen3\font minus \fontdimen4\font\relax}
+\BIBentryALTinterwordstretchfactor\fontdimen3\font minus
+  \fontdimen4\font\relax}
 \providecommand{\BIBforeignlanguage}[2]{{%
 \expandafter\ifx\csname l@#1\endcsname\relax
 \typeout{** WARNING: IEEEtran.bst: No hyphenation pattern has been}%
@@ -21,23 +22,40 @@
 \BIBdecl
 
 \bibitem{mcilroy1968coroutines}
-M.~D. McIlroy, ``Coroutines: Semantics in terms of a hypothetical coroutine machine,'' \emph{Bell Laboratories Memorandum}, 1968.
+M.~D. McIlroy, ``Coroutines: Semantics in terms of a hypothetical coroutine
+  machine,'' \emph{Bell Laboratories Memorandum}, 1968.
 
 \bibitem{mcilroy1978unix}
-M.~D. McIlroy, E.~N. Pinson, and B.~A. Tague, ``Unix time-sharing system: Foreword,'' \emph{The Bell System Technical Journal}, vol.~57, no.~6, pp. 1899--1904, 1978.
+M.~D. McIlroy, E.~N. Pinson, and B.~A. Tague, ``Unix time-sharing system:
+  Foreword,'' \emph{The Bell System Technical Journal}, vol.~57, no.~6, pp.
+  1899--1904, 1978.
 
 \bibitem{hoare1978csp}
-C.~A.~R. Hoare, ``Communicating sequential processes,'' \emph{Communications of the ACM}, vol.~21, no.~8, pp. 666--677, 1978.
+C.~A.~R. Hoare, ``Communicating sequential processes,'' \emph{Communications of
+  the ACM}, vol.~21, no.~8, pp. 666--677, 1978.
 
 \bibitem{xv6book}
 \BIBentryALTinterwordspacing
-R.~Cox, F.~Kaashoek, and R.~Morris, \emph{xv6: a simple, Unix-like teaching operating system}, 2024. [Online]. Available: \url{https://pdos.csail.mit.edu/6.828/2024/xv6/book-riscv-rev4.pdf}
+R.~Cox, F.~Kaashoek, and R.~Morris, \emph{xv6: a simple, Unix-like teaching
+  operating system}, 2024. [Online]. Available:
+  \url{https://pdos.csail.mit.edu/6.828/2024/xv6/book-riscv-rev4.pdf}
 \BIBentrySTDinterwordspacing
 
 \bibitem{remzi2018ostep}
-R.~H. Arpaci-Dusseau and A.~C. Arpaci-Dusseau, \emph{Operating Systems: Three Easy Pieces}.\hskip 1em plus 0.5em minus 0.4em\relax Arpaci-Dusseau Books, 2018.
+R.~H. Arpaci-Dusseau and A.~C. Arpaci-Dusseau, \emph{Operating Systems: Three
+  Easy Pieces}.\hskip 1em plus 0.5em minus 0.4em\relax Arpaci-Dusseau Books,
+  2018.
 
-\bibitem{baker1996tree}
-S.~Baker, \emph{tree - list contents of directories in a tree-like format}, 1996, unix / Linux Manual Pages.
+\bibitem{posix2018diff}
+{IEEE and The Open Group}, \emph{diff - compare two files}, 2018, the Open
+  Group Base Specifications Issue 7, 2018 edition / IEEE Std 1003.1-2017.
+
+\bibitem{hunt1976algorithm}
+J.~W. Hunt and M.~D. McIlroy, ``An algorithm for differential file
+  comparison,'' Bell Laboratories, Tech. Rep.~41, 1976.
+
+\bibitem{posix2018du}
+{IEEE and The Open Group}, \emph{du - estimate file space usage}, 2018, the
+  Open Group Base Specifications Issue 7, 2018 edition / IEEE Std 1003.1-2017.
 
 \end{thebibliography}

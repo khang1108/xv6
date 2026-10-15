@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workflow của diff.c trong xv6</title>
+<style>
+:root{
+  --bg:#ffffff; --p:#2c2c2a; --s:#5f5e5a; --t:#888780;
+  --surface:#F1EFE8; --border:#B4B2A9;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#1c1c1a; --p:#F1EFE8; --s:#B4B2A9; --t:#888780; --surface:#2c2c2a; --border:#5F5E5A; }
+}
+html,body{margin:0;background:var(--bg);}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--p);padding:24px 16px;}
+figure{max-width:960px;margin:0 auto;}
+svg{width:100%;height:auto;display:block;}
+figcaption{font-size:14px;color:var(--s);margin-top:12px;line-height:1.6;}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+.t{font-size:14px;fill:var(--p);}
+.ts{font-size:12px;fill:var(--s);}
+.th{font-size:14px;font-weight:500;fill:var(--p);}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace !important;font-size:12px;fill:var(--p);white-space:pre;}
+.box{fill:var(--surface);stroke:var(--border);}
+.arr{stroke:var(--s);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+.c-purple > rect{fill:#EEEDFE;stroke:#534AB7;}
+.c-purple > .th{fill:#3C3489;}
+.c-purple > .ts{fill:#534AB7;}
+.c-teal > rect,.c-teal > circle{fill:#E1F5EE;stroke:#0F6E56;}
+.c-teal > .th{fill:#085041;}
+.c-teal > .ts{fill:#0F6E56;}
+@media (prefers-color-scheme: dark){
+  .c-purple > rect{fill:#3C3489;stroke:#AFA9EC;}
+  .c-purple > .th{fill:#CECBF6;}
+  .c-purple > .ts{fill:#AFA9EC;}
+  .c-teal > rect,.c-teal > circle{fill:#085041;stroke:#5DCAA5;}
+  .c-teal > .th{fill:#9FE1CB;}
+  .c-teal > .ts{fill:#5DCAA5;}
+}
+
+/* Giữ nguyên hệ màu và typography từ template; bổ sung swimlane, nhãn. */
+.kicker{font-size:11px;font-weight:600;letter-spacing:.07em;fill:var(--t);}
+.lane{fill:none;stroke:var(--border);stroke-width:1;stroke-dasharray:4 4;}
+.guide{stroke:var(--border);stroke-width:1;fill:none;stroke-dasharray:4 4;}
+.teal-arr{stroke:#0F6E56;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+@media (prefers-color-scheme: dark){.teal-arr{stroke:#5DCAA5;}}
+</style>
+</head>
+<body>
+<figure>
+<svg viewBox="0 0 760 997" role="img" aria-labelledby="svg-title svg-description">
+<title id="svg-title">Workflow của diff.c trong xv6</title>
+<desc id="svg-description">main mở hai file chỉ đọc rồi gọi readline trên mỗi file, so sánh nội dung theo cùng số dòng; -q dừng ngay tại khác biệt đầu tiên; mặc định in từng dòng khác, EOF và cảnh báo thiếu newline.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<symbol id="folder" viewBox="0 0 24 20"><path d="M1.5 3.5h8l2 2.5h11v12h-21z" fill="var(--surface)" stroke="var(--s)" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+<symbol id="file" viewBox="0 0 18 22"><path d="M1.5 1.5h9l6 6v13h-15z M10.5 1.5v6h6" fill="var(--surface)" stroke="var(--s)" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+</defs>
+<rect class="box" x="30" y="44" width="190" height="90" rx="8" stroke-width=".7" />
+<circle cx="43" cy="58" r="3" fill="var(--t)"/>
+<circle cx="54" cy="58" r="3" fill="var(--t)"/>
+<circle cx="65" cy="58" r="3" fill="var(--t)"/>
+<text class="mono" x="42" y="85">$ diff a.txt b.txt</text>
+<text class="mono" x="42" y="102">tùy chọn: -q</text><line x1="220" y1="89" x2="248" y2="89" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="250" y="44" width="250" height="90" rx="8" stroke-width=".7" />
+<text class="th" x="262" y="66">main() đọc đối số</text>
+<text class="ts" x="262" y="86">file1 · file2 · quiet (-q)</text>
+<text class="ts" x="262" y="103">thiếu file → usage, exit(1)</text>
+</g><line x1="500" y1="89" x2="528" y2="89" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="530" y="44" width="200" height="90" rx="8" stroke-width=".7" />
+<text class="th" x="542" y="66">1.  open()</text>
+<text class="ts" x="542" y="86">mở cả hai O_RDONLY</text>
+<text class="ts" x="542" y="103">lỗi → báo và exit(1)</text>
+</g><path d="M630 134 V155 H120 V177" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="30" y="179" width="235" height="109" rx="8" stroke-width=".7" />
+<text class="th" x="42" y="201">2.  fstat(fd1, fd2)</text>
+<text class="ts" x="42" y="221">hai đầu vào phải T_FILE</text>
+<text class="ts" x="42" y="238">loại khác → báo lỗi</text>
+<text class="ts" x="42" y="255">exit(1)</text>
+</g><line x1="265" y1="232" x2="302" y2="232" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="304" y="179" width="426" height="109" rx="8" stroke-width=".7" />
+<text class="th" x="316" y="201">3.  Khởi tạo đọc từng dòng</text>
+<text class="ts" x="316" y="221">buf1 = buf2 = NULL · cap1 = cap2 = 0</text>
+<text class="ts" x="316" y="238">line_num = 1 · diff_found = 0</text>
+<text class="ts" x="316" y="255">while (1): readline(fd1) và readline(fd2)</text>
+</g><path d="M516 288 V307 H188 V326" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="30" y="328" width="320" height="145" rx="8" stroke-width=".7" />
+<text class="th" x="42" y="350">4.  readline(fd1, …)</text>
+<text class="ts" x="42" y="370">cap khởi đầu = 128 byte</text>
+<text class="ts" x="42" y="387">read từng byte đến &quot;\n&quot; hoặc EOF</text>
+<text class="ts" x="42" y="404">nếu đầy: malloc(cap × 2), chép, free</text>
+<text class="ts" x="42" y="421">lưu &quot;\n&quot; nếu có, kết thúc bằng &quot;\0&quot;</text>
+</g><line x1="350" y1="402" x2="404" y2="402" class="arr" marker-end="url(#arrow)"/><g class="c-teal">
+<rect class="box" x="406" y="328" width="324" height="145" rx="8" stroke-width=".7" />
+<text class="th" x="418" y="350">readline(fd2, …)</text>
+<text class="ts" x="418" y="370">hoạt động độc lập với fd1</text>
+<text class="ts" x="418" y="387">trả len: &gt;0 có dòng · 0 EOF</text>
+<text class="ts" x="418" y="404">trả -1 nếu cấp phát thất bại</text>
+<text class="ts" x="418" y="421">cập nhật has_nl theo dấu xuống dòng</text>
+</g><path d="M566 473 V495 H145 V515" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="30" y="517" width="245" height="115" rx="8" stroke-width=".7" />
+<text class="th" x="42" y="539">5.  So sánh hai dòng</text>
+<text class="ts" x="42" y="559">cùng EOF → dừng vòng lặp</text>
+<text class="ts" x="42" y="576">khác len hoặc has_nl</text>
+<text class="ts" x="42" y="593">hoặc strcmp(buf1,buf2) ≠ 0</text>
+</g><line x1="275" y1="571" x2="311" y2="571" class="arr" marker-end="url(#arrow)"/><polygon points="351,532 391,571 351,610 311,571" class="box" stroke-width=".8" stroke-linejoin="round"/><text class="ts" x="351" y="571" text-anchor="middle" dominant-baseline="central">khác?</text><line x1="391" y1="571" x2="426" y2="571" class="arr" marker-end="url(#arrow)"/><g class="c-teal">
+<rect class="box" x="430" y="517" width="300" height="115" rx="8" stroke-width=".7" />
+<text class="th" x="442" y="539">6.  Nếu khác nhau</text>
+<text class="ts" x="442" y="559">diff_found = 1</text>
+<text class="ts" x="442" y="576">-q: in &quot;files differ&quot;, break</text>
+<text class="ts" x="442" y="593">không -q: print_line() 2 bên</text>
+</g><path d="M351 610 V654 H128 V673" class="arr" marker-end="url(#arrow)"/><text class="ts" x="296" y="648">không khác → line_num++</text><g class="c-purple">
+<rect class="box" x="30" y="675" width="268" height="103" rx="8" stroke-width=".7" />
+<text class="th" x="42" y="697">Quay lại đọc dòng kế</text>
+<text class="ts" x="42" y="717">line_num++ sau mỗi lượt</text>
+<text class="ts" x="42" y="734">trừ khi dừng / -q</text>
+<text class="ts" x="42" y="751">lặp cho đến hết cả 2 file</text>
+</g><path d="M30 725 H15 V401 H28" class="arr" marker-end="url(#arrow)"/><path d="M580 632 V654 H584 V674" class="arr" marker-end="url(#arrow)"/><g class="c-teal">
+<rect class="box" x="322" y="675" width="408" height="103" rx="8" stroke-width=".7" />
+<text class="th" x="334" y="697">print_line(prefix, name, số dòng)</text>
+<text class="ts" x="334" y="717">&quot;&lt;&quot; cho file1 · &quot;&gt;&quot; cho file2</text>
+<text class="ts" x="334" y="734">hết file → hiện EOF</text>
+<text class="ts" x="334" y="751">thiếu &quot;\n&quot; cuối file → cảnh báo</text>
+</g><line x1="322" y1="726" x2="300" y2="726" class="arr" marker-end="url(#arrow)"/><text class="kicker" x="30" y="809">VÍ DỤ KHÁC DÒNG (DỮ LIỆU MINH HỌA)</text><rect class="box" x="30" y="821" width="381" height="116" rx="8" stroke-width=".7" />
+<circle cx="43" cy="835" r="3" fill="var(--t)"/>
+<circle cx="54" cy="835" r="3" fill="var(--t)"/>
+<circle cx="65" cy="835" r="3" fill="var(--t)"/>
+<text class="mono" x="42" y="862">$ diff a.txt b.txt</text>
+<text class="mono" x="42" y="879">a.txt:2: &lt; banana</text>
+<text class="mono" x="42" y="896">b.txt:2: &gt; berry</text><g class="c-purple">
+<rect class="box" x="432" y="821" width="298" height="116" rx="8" stroke-width=".7" />
+<text class="th" x="444" y="843">Kết thúc</text>
+<text class="ts" x="444" y="863">free(buf1,buf2) · close(fd1,fd2)</text>
+<text class="ts" x="444" y="880">exit(0) nếu giống nhau</text>
+<text class="ts" x="444" y="897">exit(1) nếu khác; 2 nếu readline lỗi</text>
+</g><rect class="box" x="30" y="963" width="16" height="16" rx="3" stroke-width=".8" style="fill:#EEEDFE;stroke:#534AB7"/>
+<text class="ts" x="54" y="972" dominant-baseline="central">Bước xử lý</text>
+<rect class="box" x="174" y="963" width="16" height="16" rx="3" stroke-width=".8" style="fill:#E1F5EE;stroke:#0F6E56"/>
+<text class="ts" x="198" y="972" dominant-baseline="central">Dữ liệu / kết quả</text>
+<rect class="box" x="370" y="963" width="16" height="16" rx="3" stroke-width=".8" stroke-dasharray="3 2"/>
+<text class="ts" x="394" y="972" dominant-baseline="central">Điều kiện / ghi chú</text>
+</svg>
+<figcaption>Workflow của <code>diff.c</code> (xv6). So sánh <strong>theo vị trí dòng</strong>, không dùng thuật toán tìm đoạn chỉnh sửa (LCS). <code>-q</code> dừng ngay khi có khác biệt; mặc định in nội dung hai dòng với tiền tố <code>&lt;</code> và <code>&gt;</code>.</figcaption>
+</figure>
+</body>
+</html>

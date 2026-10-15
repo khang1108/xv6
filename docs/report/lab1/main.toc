@@ -1,0 +1,20 @@
+\contentsline {section}{\numberline {1}primes.c}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Tổng quan}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Khó khăn và Thử thách}{2}{subsection.1.2}%
+\contentsline {section}{\numberline {2}tree.c}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Tổng quan}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Khó khăn và Thử thách}{4}{subsection.2.2}%
+\contentsline {section}{\numberline {3}diff.c}{7}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Tổng quan}{7}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Khó khăn và Thử thách}{8}{subsection.3.2}%
+\contentsline {section}{\numberline {4}du.c}{9}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Tổng quan}{9}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Khó khăn và Thử thách}{10}{subsection.4.2}%
+\contentsline {section}{\numberline {5}PingPong (pingpong.c)}{12}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Cách thực hiện}{12}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Xử lý lỗi và tài nguyên}{14}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Kiểm thử và kết quả mong đợi}{14}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Copy file cơ bản - cp (cp.c)}{15}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Cách thực hiện}{15}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Xử lý lỗi và giới hạn}{16}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Kiểm thử và kết quả mong đợi}{17}{subsection.6.3}%

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workflow của cp.c trong xv6</title>
+<style>
+:root{
+  --bg:#ffffff; --p:#2c2c2a; --s:#5f5e5a; --t:#888780;
+  --surface:#F1EFE8; --border:#B4B2A9;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#1c1c1a; --p:#F1EFE8; --s:#B4B2A9; --t:#888780; --surface:#2c2c2a; --border:#5F5E5A; }
+}
+html,body{margin:0;background:var(--bg);}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--p);padding:24px 16px;}
+figure{max-width:960px;margin:0 auto;}
+svg{width:100%;height:auto;display:block;}
+figcaption{font-size:14px;color:var(--s);margin-top:12px;line-height:1.6;}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+.t{font-size:14px;fill:var(--p);}
+.ts{font-size:12px;fill:var(--s);}
+.th{font-size:14px;font-weight:500;fill:var(--p);}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace !important;font-size:12px;fill:var(--p);white-space:pre;}
+.box{fill:var(--surface);stroke:var(--border);}
+.arr{stroke:var(--s);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+.c-purple > rect{fill:#EEEDFE;stroke:#534AB7;}
+.c-purple > .th{fill:#3C3489;}
+.c-purple > .ts{fill:#534AB7;}
+.c-teal > rect,.c-teal > circle{fill:#E1F5EE;stroke:#0F6E56;}
+.c-teal > .th{fill:#085041;}
+.c-teal > .ts{fill:#0F6E56;}
+@media (prefers-color-scheme: dark){
+  .c-purple > rect{fill:#3C3489;stroke:#AFA9EC;}
+  .c-purple > .th{fill:#CECBF6;}
+  .c-purple > .ts{fill:#AFA9EC;}
+  .c-teal > rect,.c-teal > circle{fill:#085041;stroke:#5DCAA5;}
+  .c-teal > .th{fill:#9FE1CB;}
+  .c-teal > .ts{fill:#5DCAA5;}
+}
+
+/* Giữ nguyên hệ màu và typography từ template; bổ sung swimlane, nhãn. */
+.kicker{font-size:11px;font-weight:600;letter-spacing:.07em;fill:var(--t);}
+.lane{fill:none;stroke:var(--border);stroke-width:1;stroke-dasharray:4 4;}
+.guide{stroke:var(--border);stroke-width:1;fill:none;stroke-dasharray:4 4;}
+.teal-arr{stroke:#0F6E56;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+@media (prefers-color-scheme: dark){.teal-arr{stroke:#5DCAA5;}}
+</style>
+</head>
+<body>
+<figure>
+<svg viewBox="0 0 760 882" role="img" aria-labelledby="svg-title svg-description">
+<title id="svg-title">Workflow của cp.c trong xv6</title>
+<desc id="svg-description">cp kiểm tra đủ hai đường dẫn, mở nguồn đọc, kiểm tra nguồn và đích, chặn trường hợp cùng inode, mở file đích với O_TRUNC, sao chép dữ liệu theo buffer 512 byte và xử lý short write.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<symbol id="folder" viewBox="0 0 24 20"><path d="M1.5 3.5h8l2 2.5h11v12h-21z" fill="var(--surface)" stroke="var(--s)" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+<symbol id="file" viewBox="0 0 18 22"><path d="M1.5 1.5h9l6 6v13h-15z M10.5 1.5v6h6" fill="var(--surface)" stroke="var(--s)" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+</defs>
+<rect class="box" x="30" y="44" width="190" height="89" rx="8" stroke-width=".7" />
+<circle cx="43" cy="58" r="3" fill="var(--t)"/>
+<circle cx="54" cy="58" r="3" fill="var(--t)"/>
+<circle cx="65" cy="58" r="3" fill="var(--t)"/>
+<text class="mono" x="42" y="85">$ cp src.txt dst.txt</text>
+<text class="mono" x="42" y="102">sao chép 1 file</text><line x1="220" y1="88" x2="248" y2="88" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="250" y="44" width="250" height="89" rx="8" stroke-width=".7" />
+<text class="th" x="262" y="66">main(args, argv)</text>
+<text class="ts" x="262" y="86">args phải bằng 3</text>
+<text class="ts" x="262" y="103">nếu sai → usage, exit(1)</text>
+</g><line x1="500" y1="88" x2="528" y2="88" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="530" y="44" width="200" height="89" rx="8" stroke-width=".7" />
+<text class="th" x="542" y="66">cp(src, dst)</text>
+<text class="ts" x="542" y="86">copy rồi exit(0)</text>
+<text class="ts" x="542" y="103">lỗi → exit(1)</text>
+</g><path d="M628 133 V156 H160 V176" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="30" y="178" width="326" height="149" rx="8" stroke-width=".7" />
+<text class="th" x="42" y="200">1.  Kiểm tra nguồn</text>
+<text class="ts" x="42" y="220">open(src, O_RDONLY) → source</text>
+<text class="ts" x="42" y="237">fstat(source, &amp;source_stat)</text>
+<text class="ts" x="42" y="254">nguồn là thư mục (T_DIR) → lỗi</text>
+<text class="ts" x="42" y="271">không mở / không stat được → lỗi</text>
+</g><line x1="356" y1="248" x2="397" y2="248" class="arr" marker-end="url(#arrow)"/><g class="c-teal">
+<rect class="box" x="399" y="178" width="331" height="149" rx="8" stroke-width=".7" />
+<text class="th" x="411" y="200">2.  Kiểm tra đích</text>
+<text class="ts" x="411" y="220">stat(dst): nếu tồn tại, xét type</text>
+<text class="ts" x="411" y="237">T_DIR → lỗi</text>
+<text class="ts" x="411" y="254">cùng dev và ino với nguồn → lỗi</text>
+<text class="ts" x="411" y="271">chưa tồn tại → cho phép tạo mới</text>
+</g><path d="M564 327 V349 H380 V369" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="179" y="371" width="402" height="120" rx="8" stroke-width=".7" />
+<text class="th" x="191" y="393">3.  open(dst, flags)</text>
+<text class="ts" x="191" y="413">O_WRONLY | O_CREATE | O_TRUNC</text>
+<text class="ts" x="191" y="430">đích chưa có → tạo · đã có → xóa nội dung cũ</text>
+<text class="ts" x="191" y="447">open thất bại → báo lỗi, đóng source, exit(1)</text>
+</g><line x1="380" y1="491" x2="380" y2="514" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
+<rect class="box" x="30" y="516" width="317" height="133" rx="8" stroke-width=".7" />
+<text class="th" x="42" y="538">4.  read(source, buffer, 512)</text>
+<text class="ts" x="42" y="558">char buffer[512]</text>
+<text class="ts" x="42" y="575">đọc đến 512 byte mỗi lượt</text>
+<text class="ts" x="42" y="592">&gt; 0: có dữ liệu · 0: EOF</text>
+<text class="ts" x="42" y="609">&lt; 0: báo lỗi và exit(1)</text>
+</g><line x1="347" y1="581" x2="400" y2="581" class="arr" marker-end="url(#arrow)"/><g class="c-teal">
+<rect class="box" x="402" y="516" width="328" height="133" rx="8" stroke-width=".7" />
+<text class="th" x="414" y="538">5.  write(destination, …)</text>
+<text class="ts" x="414" y="558">total_written = 0</text>
+<text class="ts" x="414" y="575">while (total_written &lt; bytes_read)</text>
+<text class="ts" x="414" y="592">ghi phần còn thiếu nếu short write</text>
+<text class="ts" x="414" y="609">write &lt;= 0 → báo lỗi, exit(1)</text>
+</g><line x1="402" y1="629" x2="348" y2="629" class="arr" marker-end="url(#arrow)"/><text class="ts" x="375" y="622" text-anchor="middle">lặp</text><path d="M190 649 V675 H560 V692" class="arr" marker-end="url(#arrow)"/><text class="ts" x="376" y="666" text-anchor="middle">EOF / lỗi</text><g class="c-teal">
+<rect class="box" x="30" y="694" width="333" height="129" rx="8" stroke-width=".7" />
+<text class="th" x="42" y="716">Dữ liệu chảy qua buffer 512 B</text>
+<text class="ts" x="42" y="736">Ví dụ file 1100 B: 512 + 512 + 76</text>
+<text class="ts" x="42" y="753">mỗi lượt đọc có thể trả ít hơn 512</text>
+<text class="ts" x="42" y="770">lệnh write có thể ghi không đủ</text>
+<text class="ts" x="42" y="787">→ lặp đến hết bytes_read</text>
+</g><g class="c-purple">
+<rect class="box" x="396" y="694" width="334" height="129" rx="8" stroke-width=".7" />
+<text class="th" x="408" y="716">6.  Dọn dẹp &amp; kết thúc</text>
+<text class="ts" x="408" y="736">đọc xong (EOF) → close(source)</text>
+<text class="ts" x="408" y="753">close(destination) · exit(0)</text>
+<text class="ts" x="408" y="770">nếu read &lt; 0 → đóng 2 fd, exit(1)</text>
+<text class="ts" x="408" y="787">không phải sao chép thư mục</text>
+</g><rect class="box" x="30" y="848" width="16" height="16" rx="3" stroke-width=".8" style="fill:#EEEDFE;stroke:#534AB7"/>
+<text class="ts" x="54" y="857" dominant-baseline="central">Bước xử lý</text>
+<rect class="box" x="174" y="848" width="16" height="16" rx="3" stroke-width=".8" style="fill:#E1F5EE;stroke:#0F6E56"/>
+<text class="ts" x="198" y="857" dominant-baseline="central">Dữ liệu / kết quả</text>
+<rect class="box" x="370" y="848" width="16" height="16" rx="3" stroke-width=".8" stroke-dasharray="3 2"/>
+<text class="ts" x="394" y="857" dominant-baseline="central">Điều kiện / ghi chú</text>
+</svg>
+<figcaption>Workflow của <code>cp.c</code> (xv6). Chỉ sao chép <strong>nội dung file</strong> theo buffer <code>512 byte</code>; kiểm tra không cho nguồn và đích cùng inode, rồi mới mở đích bằng <code>O_TRUNC</code>. Vòng lặp con xử lý trường hợp <code>write()</code> ghi thiếu byte.</figcaption>
+</figure>
+</body>
+</html>
