@@ -31,7 +31,7 @@ text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 <g class="c-purple">
 <rect x="250" y="44" width="250" height="72" rx="8" stroke-width="0.5"/>
 <text class="th" x="262" y="60">main() đọc tham số</text>
-<text class="ts" x="262" y="106">thiếu tệp → usage, exit(1)</text>
+<text class="ts" x="262" y="106">thiếu / thừa tệp → exit(2)</text>
 </g>
 <rect class="box" x="262" y="68" width="65" height="22" rx="4" stroke-width="0.5"/><text class="ts" x="294" y="79" text-anchor="middle" dominant-baseline="central">file1</text>
 <rect class="box" x="333" y="68" width="65" height="22" rx="4" stroke-width="0.5"/><text class="ts" x="365" y="79" text-anchor="middle" dominant-baseline="central">file2</text>
@@ -44,7 +44,7 @@ text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 <text class="th" x="542" y="60">1.  open() &amp; fstat()</text>
 <text class="ts" x="542" y="77">mở fd1, fd2: O_RDONLY</text>
 <text class="ts" x="542" y="92">bắt buộc st.type == T_FILE</text>
-<text class="ts" x="542" y="107">sai loại / lỗi → exit(1)</text>
+<text class="ts" x="542" y="107">sai loại / lỗi → exit(2)</text>
 </g>
 
 <path d="M630 116 V134 H86 V162" class="arr" marker-end="url(#arrow)"/>
@@ -57,8 +57,8 @@ text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 <text class="ts" x="42" y="206">đọc byte: read(fd, &amp;c, 1)</text>
 <text class="ts" x="42" y="224">dừng khi gặp '\n' hoặc EOF</text>
 <text class="ts" x="42" y="244">lưu cờ has_newline (0 hay 1)</text>
-<text class="ts" x="42" y="264">trả len &gt; 0, 0 khi chạm EOF</text>
-<text class="ts" x="42" y="284">lỗi đọc → diff_found = 2, break</text>
+<text class="ts" x="42" y="264">len &gt; 0: dòng · 0: EOF · -1: lỗi</text>
+<text class="ts" x="42" y="284">lỗi → diff_found = 2, break</text>
 </g>
 
 <line x1="230" y1="232" x2="258" y2="232" class="arr" marker-end="url(#arrow)"/>
@@ -146,7 +146,7 @@ text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 
 <line x1="290" y1="559" x2="328" y2="559" class="arr" marker-end="url(#arrow)"/>
 <rect class="box" x="330" y="546" width="400" height="26" rx="13" stroke-width="0.5"/>
-<text class="ts" x="530" y="559" text-anchor="middle" dominant-baseline="central">exit(0): khớp · exit(1): có khác biệt · exit(2): lỗi I/O</text>
+<text class="ts" x="530" y="559" text-anchor="middle" dominant-baseline="central">exit(0): khớp · exit(1): khác biệt · exit(2): lỗi</text>
 
 <!-- ============ Legend ============ -->
 <g class="c-purple"><rect x="30" y="602" width="16" height="16" rx="3" stroke-width="0.8"/></g>

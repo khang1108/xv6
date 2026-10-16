@@ -41,13 +41,13 @@ text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 <rect class="box" x="530" y="44" width="200" height="87" rx="8" stroke-width=".7" />
 <text class="th" x="542" y="66">du(path, a, s, 1)</text>
 <text class="ts" x="542" y="86">is_root = 1</text>
-<text class="ts" x="542" y="103">đệ quy trả về số byte</text>
+<text class="ts" x="542" y="103">trả số byte hoặc -1 nếu lỗi</text>
 </g><path d="M630 131 V153 H115 V168" class="arr" marker-end="url(#arrow)"/><text class="ts" x="712" y="165" text-anchor="end">Mỗi lần gọi xử lý một path</text><g class="c-purple">
 <rect class="box" x="30" y="170" width="164" height="108" rx="8" stroke-width=".7" />
 <text class="th" x="42" y="192">1.  stat(path)</text>
 <text class="ts" x="42" y="212">lấy type, size</text>
 <text class="ts" x="42" y="229">stat lỗi → báo lỗi</text>
-<text class="ts" x="42" y="246">và return 0</text>
+<text class="ts" x="42" y="246">và return -1</text>
 </g><line x1="194" y1="225" x2="198" y2="225" class="arr" marker-end="url(#arrow)"/><polygon points="240,187 280,225 240,263 200,225" class="box" stroke-width=".8" stroke-linejoin="round"/><text class="ts" x="240" y="225" text-anchor="middle" dominant-baseline="central">type?</text><line x1="280" y1="225" x2="321" y2="225" class="arr" marker-end="url(#arrow)"/><text class="ts" x="300" y="211" text-anchor="middle">FILE</text><g class="c-teal">
 <rect class="box" x="325" y="170" width="405" height="108" rx="8" stroke-width=".7" />
 <text class="th" x="337" y="192">Nhánh FILE / DEVICE</text>
@@ -59,35 +59,35 @@ text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 <text class="th" x="42" y="348">2.  open() + read()</text>
 <text class="ts" x="42" y="368">open(path, 0)</text>
 <text class="ts" x="42" y="385">bỏ inum = 0, &quot;.&quot;, &quot;..&quot;</text>
-<text class="ts" x="42" y="402">đọc từng struct dirent</text>
-<text class="ts" x="42" y="419">lấy tên có kích thước DIRSIZ</text>
+<text class="ts" x="42" y="402">đọc đủ dirent; 0: EOF</text>
+<text class="ts" x="42" y="419">lỗi / đọc thiếu → trả -1</text>
 </g><line x1="238" y1="389" x2="264" y2="389" class="arr" marker-end="url(#arrow)"/><g class="c-teal">
 <rect class="box" x="266" y="326" width="232" height="126" rx="8" stroke-width=".7" />
 <text class="th" x="278" y="348">3.  names[] động</text>
 <text class="ts" x="278" y="368">malloc ban đầu: 16 tên</text>
-<text class="ts" x="278" y="385">khi đầy → capacity × 2</text>
-<text class="ts" x="278" y="402">memmove tên, thêm byte NUL</text>
-<text class="ts" x="278" y="419">count tăng sau mỗi tên</text>
+<text class="ts" x="278" y="385">đầy → ×2; kiểm tra malloc</text>
+<text class="ts" x="278" y="402">malloc lỗi → dọn, trả -1</text>
+<text class="ts" x="278" y="419">lưu tên có NUL; count++</text>
 </g><line x1="498" y1="389" x2="524" y2="389" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
 <rect class="box" x="526" y="326" width="204" height="126" rx="8" stroke-width=".7" />
 <text class="th" x="538" y="348">4.  close(fd) sớm</text>
-<text class="ts" x="538" y="368">đã lưu toàn bộ tên</text>
+<text class="ts" x="538" y="368">quét tên thành công</text>
 <text class="ts" x="538" y="385">giải phóng descriptor</text>
 <text class="ts" x="538" y="402">trước khi đệ quy</text>
 </g><path d="M628 452 V474 H180 V495" class="arr" marker-end="url(#arrow)"/><g class="c-purple">
 <rect class="box" x="30" y="497" width="322" height="141" rx="8" stroke-width=".7" />
 <text class="th" x="42" y="519">5.  Lặp i = 0 … count - 1</text>
 <text class="ts" x="42" y="539">ghép buf = path + &quot;/&quot; + names[i]</text>
-<text class="ts" x="42" y="556">quá MAXPATH → bỏ qua mục đó</text>
-<text class="ts" x="42" y="573">total_size += du(buf, a, s, 0)</text>
-<text class="ts" x="42" y="590">đệ quy hết nhánh rồi mới cộng</text>
+<text class="ts" x="42" y="556">đường dẫn quá dài → trả -1</text>
+<text class="ts" x="42" y="573">size = du(buf, a, s, 0); kiểm tra lỗi</text>
+<text class="ts" x="42" y="590">size &lt; 0: trả -1; còn lại: cộng tổng</text>
 </g><line x1="352" y1="564" x2="396" y2="564" class="arr" marker-end="url(#arrow)"/><g class="c-teal">
 <rect class="box" x="398" y="497" width="332" height="141" rx="8" stroke-width=".7" />
 <text class="th" x="410" y="519">6.  Tổng hợp &amp; in kết quả</text>
 <text class="ts" x="410" y="539">free(names) sau khi duyệt xong</text>
-<text class="ts" x="410" y="556">is_root: luôn in tổng dung lượng</text>
-<text class="ts" x="410" y="573">không phải gốc: in khi !s</text>
-<text class="ts" x="410" y="590">return total_size (byte, không cộng inode thư mục)</text>
+<text class="ts" x="410" y="556">chỉ in tổng nếu cả nhánh thành công</text>
+<text class="ts" x="410" y="573">in khi is_root hoặc !s</text>
+<text class="ts" x="410" y="590">return total_size (bỏ size thư mục)</text>
 </g><path d="M48 606 H18 V225 H28" class="arr" marker-end="url(#arrow)"/><text class="ts" x="28" y="490" text-anchor="middle" transform="rotate(-90 28 490)">đệ quy</text><text class="kicker" x="30" y="670">VÍ DỤ KẾT QUẢ (GIẢ ĐỊNH)</text><rect class="box" x="30" y="684" width="346" height="113" rx="8" stroke-width=".7" />
 <circle cx="43" cy="698" r="3" fill="#888780"/>
 <circle cx="54" cy="698" r="3" fill="#888780"/>
@@ -106,4 +106,5 @@ text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 <text class="ts" x="198" y="833" dominant-baseline="central">Dữ liệu / kết quả</text>
 <rect class="box" x="370" y="824" width="16" height="16" rx="3" stroke-width=".8" stroke-dasharray="3 2"/>
 <text class="ts" x="394" y="833" dominant-baseline="central">Điều kiện / ghi chú</text>
+<text class="ts" x="30" y="811">Mọi lỗi: dọn tài nguyên → trả -1; main: exit(1). Thành công: exit(0).</text>
 </svg>

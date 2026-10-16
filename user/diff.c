@@ -8,6 +8,8 @@
  *
  * Hàm này đọc từng byte cho đến khi gặp ký tự '\n' hoặc EOF.
  * Ký tự '\n' sẽ được lưu vào buffer, và chuỗi sẽ được kết thúc bằng '\0'.
+ * Nếu read() lỗi, kể cả sau khi đã đọc một phần dòng, trả về -1;
+ * bên gọi chịu trách nhiệm giải phóng buffer và không so sánh dòng dở dang.
  *
  * @param fd File descriptor của file đang đọc.
  * @param buf Con trỏ trỏ tới mảng dữ liệu. Có thể bị thay đổi nếu mảng được cấp phát lại.
@@ -26,10 +28,12 @@ int readline(int fd, char **buf, int *cap, int *has_newline)
     }
 
     int len = 0;
+    int n;
     char c;
     *has_newline = 0;
 
-    while (read(fd, &c, 1) == 1)
+    // Giữ kết quả read(): 0 là EOF, -1 là lỗi, không được coi cả hai là hết tệp.
+    while ((n = read(fd, &c, 1)) == 1)
     {
         if (len + 1 >= *cap)
         {
@@ -54,6 +58,8 @@ int readline(int fd, char **buf, int *cap, int *has_newline)
     }
 
     (*buf)[len] = '\0';
+    if (n < 0)
+        return -1;
     return len;
 }
 
@@ -103,7 +109,8 @@ int main(int argc, char *argv[])
     int quiet = 0;
     char *f1 = 0, *f2 = 0;
 
-    // Phân tích tham số
+    // Mã thoát: 0 = giống nhau, 1 = khác nhau, 2 = lỗi cú pháp/tệp/bộ nhớ/I/O.
+    // Phân tích tham số; chỉ chấp nhận đúng hai đường dẫn và tùy chọn -q.
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "-q") == 0)
@@ -112,25 +119,31 @@ int main(int argc, char *argv[])
             f1 = argv[i];
         else if (!f2)
             f2 = argv[i];
+        else
+        {
+            fprintf(2, "usage: diff file1 file2 [-q]\n");
+            exit(2);
+        }
     }
 
     if (!f1 || !f2)
     {
         fprintf(2, "usage: diff file1 file2 [-q]\n");
-        exit(1);
+        exit(2);
     }
 
     int fd1 = open(f1, O_RDONLY);
-    int fd2 = open(f2, O_RDONLY);
     if (fd1 < 0)
     {
         fprintf(2, "diff: cannot open %s\n", f1);
-        exit(1);
+        exit(2);
     }
+    int fd2 = open(f2, O_RDONLY);
     if (fd2 < 0)
     {
         fprintf(2, "diff: cannot open %s\n", f2);
-        exit(1);
+        close(fd1);
+        exit(2);
     }
 
     struct stat st1, st2;
@@ -138,7 +151,9 @@ int main(int argc, char *argv[])
         fstat(fd2, &st2) < 0 || st2.type != T_FILE)
     {
         fprintf(2, "diff: must be files\n");
-        exit(1);
+        close(fd1);
+        close(fd2);
+        exit(2);
     }
 
     int cap1 = 0, cap2 = 0;
@@ -153,7 +168,8 @@ int main(int argc, char *argv[])
 
         if (len1 < 0 || len2 < 0)
         {
-            fprintf(2, "diff: read error\n");
+            // Lỗi phải ghi đè mã 1 nếu các dòng trước đó đã khác nhau.
+            fprintf(2, "diff: read or allocation error\n");
             diff_found = 2;
             break;
         }

@@ -161,6 +161,18 @@ xv6, nhóm tập trung xử lý những trường hợp sau:
     do thao tác duyệt không tích lũy theo độ sâu cây, giảm nguy
     cơ vượt giới hạn \texttt{NOFILE}.
 
+    \textit{Giới hạn còn lại:} Mỗi tầng đệ quy vẫn chiếm user stack,
+    gồm bộ đệm \texttt{buf[PATHSIZ + 1]} và các biến cục bộ. Trong
+    cấu hình lab hiện tại (\texttt{LAB\_UTIL}),
+    \texttt{USERSTACK = 2} trong \texttt{kernel/param.h}, tương ứng
+    $8192$ byte ($8\,\mathrm{KiB}$), không tự động mở rộng. Vì vậy,
+    đóng descriptor chỉ giải quyết giới hạn FD; cây quá sâu vẫn có
+    thể làm tràn user stack. Độ sâu an toàn phụ thuộc khung hàm sau
+    biên dịch và phần stack đã sử dụng. Cờ \texttt{-L} giới hạn số
+    tầng được duyệt nhưng không mở rộng stack; bỏ cờ này không có
+    nghĩa chương trình hỗ trợ độ sâu tùy ý. Khi không bật
+    \texttt{LAB\_UTIL}, mã nguồn này dùng \texttt{USERSTACK = 1}.
+
     \item \textbf{Tên tệp không có ký tự kết thúc chuỗi
     (\texttt{DIRSIZ = 14}):}
     \texttt{struct dirent} lưu tên tệp bằng mảng
@@ -177,10 +189,11 @@ xv6, nhóm tập trung xử lý những trường hợp sau:
 
     \item \textbf{Kiểm soát kích thước bộ đệm đường dẫn
     (\texttt{PATHSIZ = 128}):}
-    Nhóm sử dụng bộ đệm đường dẫn có kích thước
-    \texttt{PATHSIZ = 128}, tương ứng với giá trị
-    \texttt{MAXPATH = 128} được định nghĩa trong
-    \texttt{kernel/param.h} của xv6-riscv. Khi duyệt nhiều cấp,
+    Nhóm định nghĩa \texttt{PATHSIZ = 128} và cấp phát bộ đệm
+    \texttt{buf[PATHSIZ + 1]} gồm 129 byte. Các lời gọi hệ thống
+    vẫn bị ràng buộc bởi \texttt{MAXPATH = 128} (kể cả byte kết thúc
+    chuỗi) trong \texttt{kernel/param.h} của xv6-riscv.
+    Khi duyệt nhiều cấp,
     đường dẫn ghép từ tên thư mục cha và tên mục con có thể vượt
     kích thước bộ đệm \cite{xv6param}.
 

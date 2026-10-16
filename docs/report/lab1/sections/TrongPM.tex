@@ -29,11 +29,11 @@ luồng byte \cite{xv6book,xv6pipe}. Vì vậy, chương trình sử dụng hai 
     file descriptor (FD) không cần thiết (Bảng \ref{tab:pingpong_pipes}).
 
     \item \textbf{Trao đổi dữ liệu:}
-    Cha gửi byte \code{'p'} qua \code{parent\_to\_child[1]}.
-    Con nhận dữ liệu từ \code{parent\_to\_child[0]}, in
+    Cha gửi byte \code{'p'} qua pipe \code{parent\_to\_child[1]}.
+    Con đọc dữ liệu từ \code{parent\_to\_child[0]}, in dòng
     \texttt{<pid>: received ping}, rồi gửi lại một byte qua
     \code{child\_to\_parent[1]}.
-    Cha nhận phản hồi từ \code{child\_to\_parent[0]} và in
+    Cha nhận phản hồi từ pipe \code{child\_to\_parent[0]} và in
     \texttt{<pid>: received pong}.
 
     \item \textbf{Thu hồi tài nguyên:}
@@ -106,18 +106,6 @@ vòng đời tiến trình \cite{xv6book,remzi2018ostep}.
     con, tránh để zombie tồn tại trong thời gian cha còn hoạt động.
 \end{enumerate}
 
-\subsection{Kết quả thực nghiệm}
-Hình \ref{fig:pingpong} minh họa đầu ra của lệnh \texttt{pingpong}
-trên shell xv6. Theo yêu cầu của MIT, dòng
-\texttt{received ping} phải xuất hiện trước
-\texttt{received pong} \cite{mitxv6util2024}.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.45\textwidth]{images/pingpong.png}
-    \caption{Kết quả thực thi \texttt{pingpong} trên shell xv6}
-    \label{fig:pingpong}
-\end{figure}
-
 \section{cp.c}
 
 \subsection{Tổng quan}
@@ -131,7 +119,8 @@ Trong xv6, thông tin tệp được quản lý bằng inode; cặp giá trị
 \texttt{(dev, ino)} giúp xác định hai đường dẫn có đang tham chiếu đến
 cùng một inode hay không \cite{xv6book}.
 Chương trình đọc dữ liệu từ tệp nguồn được mở bằng \code{O\_RDONLY}
-và ghi sang tệp đích bằng \code{O\_WRONLY | O\_CREATE | O\_TRUNC},
+và ghi sang tệp đích bằng tổ hợp cờ
+\code{O\_WRONLY} $|$ \code{O\_CREATE} $|$ \code{O\_TRUNC},
 thông qua bộ đệm có kích thước cố định.
 
 \begin{figure}[H]
@@ -151,8 +140,8 @@ thông qua bộ đệm có kích thước cố định.
     cặp \code{dev}, \code{ino} nhằm phát hiện trường hợp trùng tệp.
 
     \item \textbf{Mở đích và chuẩn bị bộ đệm:}
-    Sau khi kiểm tra, mở tệp đích với các cờ
-    \code{O\_WRONLY | O\_CREATE | O\_TRUNC}.
+    Sau khi kiểm tra, mở tệp đích với tổ hợp các cờ
+    \code{O\_WRONLY} $|$ \code{O\_CREATE} $|$ \code{O\_TRUNC}.
     Sử dụng bộ đệm \code{buffer[512]} để truyền dữ liệu theo từng khối.
 
     \item \textbf{Sao chép dữ liệu:}
@@ -175,11 +164,11 @@ và dọn dẹp tài nguyên \cite{xv6book}.
     khiến dữ liệu nguồn bị mất trước khi sao chép
     \cite{xv6sysfile}.\\
     \textit{Giải pháp:}
-    Trước khi mở đích, chương trình sử dụng \code{stat()} để so sánh
-    \code{source\_stat.dev == destination\_stat.dev} và
-    \code{source\_stat.ino == destination\_stat.ino}.
-    Nếu cả hai trùng nhau, chương trình thông báo lỗi và đóng FD nguồn
-    mà không thực hiện \code{O\_TRUNC}.
+    Trước khi mở đích, chương trình dùng \code{stat()} để đối chiếu:
+    \code{source\_stat.dev} $==$ \code{destination\_stat.dev} cùng với
+    \code{source\_stat.ino} $==$ \code{destination\_stat.ino}.
+    Nếu cả hai điều kiện trên đều thỏa mãn, chương trình thông báo lỗi và đóng
+    FD nguồn mà không thực hiện \code{O\_TRUNC}.
 
     \item \textbf{Kiểm tra kết quả ghi dữ liệu:}
     Trong giao diện I/O kiểu Unix, mã trả về của \code{write()} cần
@@ -189,9 +178,9 @@ và dọn dẹp tài nguyên \cite{xv6book}.
     \cite{xv6file}.\\
     \textit{Giải pháp:}
     Dùng biến \code{total\_written} để theo dõi lượng dữ liệu đã ghi.
-    Nếu \code{write()} trả về một số byte dương nhỏ hơn số byte cần
-    ghi, chương trình tiếp tục từ
-    \code{buffer + total\_written}; nếu trả về giá trị không dương,
+    Nếu \code{write()} trả về số byte dương nhỏ hơn số byte cần ghi,
+    chương trình tiếp tục ghi tiếp từ vị trí
+    \code{buffer} $+$ \code{total\_written}; nếu trả về giá trị không dương,
     chương trình xử lý như lỗi ghi.
 
     \item \textbf{Từ chối sao chép thư mục và dọn dẹp FD:}
@@ -204,39 +193,3 @@ và dọn dẹp tài nguyên \cite{xv6book}.
     \code{write()} thất bại, chương trình đóng các FD đã mở và trả về
     mã lỗi, thay vì tiếp tục với dữ liệu chưa được sao chép đầy đủ.
 \end{enumerate}
-
-\subsection{Kết quả thực nghiệm}
-Bảng \ref{tab:cp_tests} liệt kê các ca kiểm thử và đầu ra mong đợi
-của lệnh \texttt{cp}.
-
-\begin{table}[H]
-    \centering
-    \small
-    \begin{tabularx}{\textwidth}{p{0.38\textwidth}>{\raggedright\arraybackslash}X}
-        \toprule
-        Kiểm thử & Kết quả mong đợi \\
-        \midrule
-        \texttt{echo hello > a}, \texttt{cp a b}, \texttt{cat b}
-            & In \texttt{hello} (sao chép thành công). \\
-        \texttt{cp a}
-            & In \texttt{usage: cp src dst} (thiếu tham số). \\
-        \texttt{cp nofile out}
-            & In \texttt{cp: cannot open nofile} (nguồn không tồn tại). \\
-        \texttt{cp . a}
-            & In \texttt{cp: source is a directory: .} (nguồn là thư mục). \\
-        \texttt{cp a a}
-            & In \texttt{cp: source and destination are the same file}
-              (nguồn và đích trùng nhau). \\
-        \bottomrule
-    \end{tabularx}
-    \caption{Các trường hợp kiểm thử chức năng và xử lý ngoại lệ
-    của lệnh \texttt{cp}}
-    \label{tab:cp_tests}
-\end{table}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.55\textwidth]{images/cp.png}
-    \caption{Kết quả chạy kiểm thử lệnh \texttt{cp} trên shell xv6}
-    \label{fig:cp}
-\end{figure}

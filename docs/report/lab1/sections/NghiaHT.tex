@@ -34,7 +34,11 @@ xây dựng hàm \code{readline()} để đọc dữ liệu từ file descriptor
     \item \textbf{Đọc từng dòng:} Hàm \code{readline()} sử dụng hai bộ đệm độc lập, mỗi
         bộ đệm có dung lượng ban đầu 128 byte. Khi một dòng dài hơn sức chứa hiện tại,
         chương trình cấp phát vùng nhớ mới với dung lượng gấp đôi, sao chép dữ liệu bằng
-        \code{memmove()} và giải phóng vùng nhớ cũ.
+        \code{memmove()} và giải phóng vùng nhớ cũ. Kết quả của \code{read()} được
+        lưu riêng: \code{0} là EOF, giá trị âm là lỗi. Nếu lỗi xảy ra ngay từ byte
+        đầu hoặc giữa dòng, \code{readline()} trả về \code{-1}, không coi phần dòng
+        đã đọc là dữ liệu hợp lệ. Hàm chỉ trả về \code{0} khi gặp EOF mà chưa đọc
+        được byte nào; dòng rỗng có ký tự xuống dòng vẫn có độ dài bằng \code{1}.
     \item \textbf{So sánh và xuất kết quả:} Với mỗi cặp dòng cùng chỉ số, chương trình
         đối chiếu chiều dài, cờ \code{has\_newline} và nội dung bằng \code{strcmp()}.
         Khi phát hiện khác biệt, hàm \code{print\_line()} hiển thị dòng tương ứng của
@@ -75,13 +79,26 @@ Trong quá trình triển khai, nhóm tập trung xử lý các trường hợp 
     chương trình đóng các file descriptor và giải phóng bộ đệm đã cấp phát. Mã thoát
     được quy ước là \code{0} nếu hai tệp giống nhau, \code{1} nếu có khác biệt và
     \code{2} nếu xảy ra lỗi, tương thích với quy ước của \texttt{diff} trong POSIX
-    \cite{posix2018diff}.
+    \cite{posix2018diff}. Cụ thể, thiếu hoặc thừa đường dẫn, mở tệp thất bại,
+    lỗi \code{fstat()}, đầu vào không phải tệp thường, lỗi cấp phát và lỗi đọc
+    đều dẫn đến mã \code{2}. Trong vòng so sánh, lỗi đặt \code{diff\_found = 2}
+    rồi dừng, kể cả khi trước đó đã phát hiện khác biệt; các bộ đệm và descriptor
+    được thu hồi trước khi thoát. Với \code{-q}, chương trình dừng ngay ở khác biệt
+    đầu tiên nên không kiểm tra các lỗi có thể xuất hiện ở phần chưa đọc.
 \end{enumerate}
 
 \section{du.c}
 
 \subsection{Tổng quan}
-\texttt{du.c} (\textit{Disk Usage}) mô phỏng tiện ích cốt lõi trên các hệ điều hành họ Unix theo chuẩn POSIX \cite{posix2018du}, hỗ trợ ước tính dung lượng chiếm dụng của cây thư mục và tập tin bằng thuật toán duyệt đệ quy hậu thứ tự (\textit{post-order bottom-up traversal}). Tổng dung lượng của một thư mục được định nghĩa bằng tổng dung lượng thực tế của tất cả các tệp tin và cây con bên trong nó.
+\texttt{du.c} (\textit{Disk Usage}) tham khảo tiện ích \texttt{du} trên các hệ điều hành họ Unix \cite{posix2018du}, sử dụng thuật toán duyệt đệ quy hậu thứ tự (\textit{post-order bottom-up traversal}) để cộng dồn kích thước tệp trong cây thư mục.
+
+\textbf{Quy ước tính dung lượng:} Phiên bản của nhóm tính theo byte, cộng giá trị
+\code{st.size} của các mục \code{T\_FILE} và \code{T\_DEVICE} trong cây con.
+Chương trình bỏ qua kích thước \code{st.size} của bản thân mọi thư mục, kể cả thư mục
+gốc; do đó thư mục rỗng có tổng bằng \code{0}. Đây là tổng kích thước logic của các
+tệp, khác với cách thống kê dung lượng khối đĩa của \texttt{du} POSIX/GNU, vốn tính
+cả dung lượng của bản thân thư mục \cite{posix2018du}. Quy ước này được áp dụng
+nhất quán cho đầu ra mặc định và các cờ \code{-a}, \code{-s}.
 
 Trong hệ thống tệp xv6 \cite{xv6book}, một thư mục được tổ chức như một tập tin đặc biệt chứa danh sách các bản ghi \texttt{struct dirent} ($16\text{ bytes}$ gồm $2\text{ bytes}$ chỉ mục \texttt{inum} và $14\text{ bytes}$ tên \texttt{name}). Kích thước byte thực tế \texttt{st.size} của từng inode được truy xuất chính xác thông qua lời gọi hệ thống \code{stat()}.
 
@@ -94,9 +111,9 @@ Trong hệ thống tệp xv6 \cite{xv6book}, một thư mục được tổ ch�
 
 \noindent Luồng thực thi diễn ra tuần tự qua các giai đoạn:
 \begin{itemize}[noitemsep, topsep=2pt]
-    \item \textbf{Khởi tạo và phân tích đối số:} Tiếp nhận đường dẫn mục tiêu (mặc định là \code{"."}), phân tích cờ tóm tắt \code{-s} (chỉ in kích thước thư mục gốc) và cờ chi tiết \code{-a} (in toàn bộ kích thước tệp tin đơn lẻ lẫn thư mục con).
+    \item \textbf{Khởi tạo và phân tích đối số:} Tiếp nhận tối đa một đường dẫn mục tiêu (mặc định là \code{"."}), phân tích cờ tóm tắt \code{-s} (chỉ in kết quả đường dẫn gốc) và cờ chi tiết \code{-a} (in thêm kích thước tệp con). Khi kết hợp hai cờ, \code{-s} ẩn mọi kết quả mục con.
     \item \textbf{Điều kiện dừng (Base Case):} Sử dụng \code{stat(path, \&st)}. Nếu đường dẫn trỏ tới một tệp tin thường (\code{T\_FILE}) hoặc tệp thiết bị (\code{T\_DEVICE}), kích thước \code{st.size} được trả về ngay lập tức; đồng thời in thông tin ra màn hình nếu đường dẫn là gốc được chỉ định hoặc có cờ \code{-a} (\code{is\_root || (a \&\& !s)}).
-    \item \textbf{Duyệt con và cộng dồn (Bottom-up):} Khi gặp thư mục (\code{T\_DIR}), chương trình quét nội dung thư mục, lưu danh sách các tên tệp con hợp lệ, tiến hành gọi đệ quy \code{du(buf, a, s, 0)} cho từng nhánh con và cộng dồn vào biến \code{total\_size}. Thư mục hoàn thành đệ quy sẽ in kích thước tích lũy của chính nó trước khi trả kết quả về cho thư mục cha.
+    \item \textbf{Duyệt con và cộng dồn (Bottom-up):} Khi gặp thư mục (\code{T\_DIR}), chương trình quét nội dung thư mục, lưu danh sách các tên tệp con hợp lệ, rồi gọi đệ quy \code{du(buf, a, s, 0)}. Chỉ kết quả không âm mới được cộng vào \code{total\_size}. Sau khi mọi mục con được xử lý thành công, thư mục in tổng nếu là gốc hoặc không bật \code{-s}, rồi trả tổng về cho cha. Nếu một mục lỗi, nhánh hiện tại dừng và trả \code{-1}.
 \end{itemize}
 
 \subsection{Khó khăn và Thử thách}
@@ -104,14 +121,55 @@ Dựa trên kiến trúc của hệ điều hành xv6 và các ca biên trong qu
 
 \begin{enumerate}[noitemsep, topsep=2pt]
     \item \textbf{Giới hạn File Descriptor (\code{NOFILE = 16}):}
-    Trong kernel xv6, mỗi tiến trình bị giới hạn mở tối đa 16 file descriptors đồng thời (\code{NOFILE = 16} trong \texttt{kernel/param.h}) \cite{xv6book}. Nếu duy trì \code{fd} của thư mục đang mở trong suốt các lời gọi đệ quy sâu, hệ thống sẽ nhanh chóng cạn kiệt FD khi độ sâu thư mục vượt quá ngưỡng cho phép, gây lỗi sập chương trình. \\
-    \textit{Giải pháp:} Đọc toàn bộ tên các mục con vào mảng động \code{names} trên bộ nhớ heap, sau đó thực hiện lệnh \code{close(fd)} ngay lập tức trước khi bắt đầu bất kỳ lời gọi đệ quy con nào. Kỹ thuật này giúp số lượng FD mở tại mỗi thời điểm chỉ là $O(1)$ (tối đa 1 FD trong lúc đọc), bảo đảm an toàn với mọi độ sâu cấu trúc thư mục.
+    Trong kernel xv6, mỗi tiến trình bị giới hạn mở tối đa 16 file descriptors đồng thời (\code{NOFILE = 16} trong \texttt{kernel/param.h}) \cite{xv6book}. Nếu duy trì \code{fd} của thư mục đang mở trong suốt các lời gọi đệ quy sâu, số FD sẽ tích lũy theo độ sâu, khiến \code{open()} thất bại khi đạt giới hạn. \\
+    \textit{Giải pháp:} Đọc toàn bộ tên các mục con vào mảng động \code{names} trên bộ nhớ heap, sau đó thực hiện lệnh \code{close(fd)} trước khi bắt đầu bất kỳ lời gọi đệ quy con nào. Nhờ đó, số FD mở thêm do thao tác duyệt duy trì ở mức $O(1)$ (tối đa một FD thư mục trong lúc đọc), không tích lũy theo độ sâu cây.
+
+    \textit{Giới hạn còn lại:} Mỗi lời gọi \code{du()} vẫn sử dụng user stack,
+    bao gồm bộ đệm \code{buf[MAXPATH]} kích thước 512 byte và các biến cục bộ.
+    Trong cấu hình lab hiện tại (\code{LAB\_UTIL}), \texttt{USERSTACK = 2} trong
+    \texttt{kernel/param.h}, tương ứng $8192$ byte ($8\,\mathrm{KiB}$); stack này
+    không tự động mở rộng. Vì vậy, chương trình chưa xử lý được cây có độ sâu tùy ý:
+    đệ quy quá sâu vẫn có thể gây tràn user stack. Ngưỡng cụ thể phụ thuộc kích thước
+    khung hàm sau biên dịch và phần stack đã dùng, không chỉ số FD. Khi không bật
+    \code{LAB\_UTIL}, cấu hình trong mã nguồn này dùng \code{USERSTACK = 1}.
 
     \item \textbf{Phòng chống lặp vô hạn và lọc Inode rác:}
     Mọi thư mục Unix đều chứa hai thực thể liên kết cứng đặc thù là \texttt{"."} (thư mục hiện hành) và \texttt{".."} (thư mục cha). Ngoài ra, các entry đã xóa trong xv6 vẫn tồn tại trong bảng chỉ mục với \code{inum == 0}. \\
-    \textit{Giải pháp:} Chủ động loại bỏ các khối có \code{de.inum == 0} và kiểm tra lọc bỏ chuỗi \texttt{"."} cùng \texttt{".."}, tránh hoàn toàn nguy cơ lặp đệ quy vô hạn làm tràn stack kernel và đảm bảo tính chính xác của phép cộng dồn dung lượng.
+    \textit{Giải pháp:} Bỏ qua các entry có \code{de.inum == 0} và lọc bỏ
+    \texttt{"."} cùng \texttt{".."} để không đệ quy quay lại chính thư mục hiện tại
+    hoặc thư mục cha. Điều này ngăn vòng lặp do hai entry đặc biệt gây ra và tránh
+    cộng lặp dung lượng; stack chịu ảnh hưởng khi đệ quy là user stack, vì
+    \texttt{du} chạy ở không gian người dùng. Một cây hợp lệ nhưng quá sâu vẫn có
+    thể làm tràn user stack như giới hạn nêu trên.
 
     \item \textbf{Quản lý bộ nhớ mảng động và kiểm soát đường dẫn:}
     Số lượng phần tử trong một thư mục là biến thiên và không thể biết trước, trong khi việc ghép nối chuỗi đường dẫn đệ quy tiềm ẩn nguy cơ tràn mảng đệm. \\
-    \textit{Giải pháp:} Khởi tạo mảng con trỏ \code{names} ban đầu với sức chứa 16 phần tử, tự động tăng gấp đôi kích thước (\code{capacity * 2}) qua \code{malloc()} và \code{memmove()} khi danh sách vượt ngưỡng. Đồng thời, trước khi ghép chuỗi đường dẫn con, chương trình luôn kiểm tra điều kiện an toàn: \code{strlen(path) + 1 + strlen(names[i]) < sizeof(buf)} và giải phóng vùng nhớ sau khi sử dụng.
+    \textit{Giải pháp:} Khai báo \code{char (*names)[DIRSIZ + 1]}, tức con trỏ
+    tới mảng ký tự có độ dài cố định. Vùng heap lưu liên tiếp các chuỗi, mỗi phần tử
+    chiếm \code{DIRSIZ + 1 = 15} byte (gồm byte kết thúc chuỗi), không phải một mảng
+    các con trỏ \code{char *}. Sức chứa ban đầu là 16 phần tử và tăng gấp đôi
+    (\code{capacity * 2}) qua \code{malloc()} và \code{memmove()} khi danh sách đầy.
+    Cả lần cấp phát đầu và lần mở rộng đều được kiểm tra trước khi sử dụng;
+    nếu thất bại, chương trình báo lỗi, đóng FD, giải phóng mảng cũ nếu có và trả
+    \code{-1}, không sao chép vào con trỏ rỗng.
+    Trước khi ghép đường dẫn con, chương trình kiểm tra tổng chiều dài đường dẫn
+    cha, dấu phân cách, tên con và byte kết thúc chuỗi không vượt \code{sizeof(buf)};
+    mục vượt bộ đệm làm nhánh hiện tại báo lỗi và trả \code{-1}.
+    Vùng nhớ danh sách được giải phóng sau khi duyệt
+    xong thư mục. Bộ đệm
+    cục bộ 512 byte không mở rộng giới hạn đường dẫn của syscall xv6:
+    \code{MAXPATH = 128} trong \texttt{kernel/param.h} vẫn áp dụng.
+
+    \item \textbf{Phân biệt tổng hợp lệ với kết quả chưa đầy đủ:}
+    Nếu bỏ qua lỗi đọc hoặc xem mục không truy cập được là có kích thước bằng
+    \code{0}, chương trình có thể in tổng nhỏ hơn thực tế nhưng vẫn báo thành công. \\
+    \textit{Giải pháp:} Lưu kết quả \code{read()} khi đọc thư mục. Chỉ
+    \code{0} là EOF hợp lệ; giá trị âm hoặc bản ghi ngắn hơn một
+    \code{struct dirent} đều được báo lỗi. Lỗi \code{stat()}, \code{open()},
+    cấp phát, đọc thư mục hoặc đường dẫn vượt giới hạn được truyền về bằng
+    \code{-1}. Các tầng cha giải phóng danh sách tên và trả lỗi tiếp, không in
+    tổng của nhánh bị ảnh hưởng. Những dòng của tệp hoặc nhánh đã hoàn tất trước
+    đó vẫn có thể xuất hiện; chương trình không thu hồi đầu ra đã in.
+    Hàm \code{main()} dùng mã thoát \code{0} khi tính thành công và \code{1}
+    khi có lỗi cú pháp hoặc lỗi trong quá trình duyệt.
 \end{enumerate}

@@ -48,9 +48,15 @@ int parse(char *s) {
  * @brief Hàm này dùng để liệt kê một đường dẫn bất kỳ nào đó. Có hỗ trợ
  * các tùy biến về độ sâu và cách hiển thị.
  *
+ * Đóng FD thư mục trước khi đệ quy giúp số FD mở thêm ở O(1), nhưng
+ * mỗi tầng vẫn chiếm user stack. LAB_UTIL có USERSTACK = 2 trang
+ * (8 KiB), không tự mở rộng; cây quá sâu vẫn có thể tràn stack.
+ * Bộ đệm PATHSIZ + 1 và MAXPATH của syscall cũng giới hạn đường dẫn.
+ * -L chỉ giới hạn số tầng duyệt, không mở rộng các tài nguyên này.
+ *
  * @param path đường dẫn muốn liệt kê
  * @param level mức hiện tại trong cây
- * @param max_depth độ sâu tối đa, -1 là không giới hạn
+ * @param max_depth độ sâu tối đa, -1 là không giới hạn bằng tùy chọn -L
  * @param only_dir chỉ hiển thị thư mục khi khác 0
  * @param ancestor_has_next mỗi mức tổ tiên có còn entry phía sau hay không
  */
@@ -174,6 +180,7 @@ int tree(char *path, int level, int max_depth, int only_dir,
             fprintf(2, "tree: read failed at %s\n", path);
 			status = -1;
         }
+        // Giải phóng FD trước các lời gọi con; user stack vẫn tăng theo độ sâu.
         close(fd);
 
         for (int i = 0; i < count; i++) {
