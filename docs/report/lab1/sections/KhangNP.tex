@@ -1,88 +1,248 @@
 \section{primes.c}
 
 \subsection{Tổng quan}
-\texttt{primes.c} được triển khai in ra các số nguyên tốt từ \texttt{2...280} bằng thuật toán Sàng Eratosthenes đồng thời (\textit{Concurrent Prime Sieve}) dựa trên mô hình xử lý luồng dữ liệu qua chuỗi đường ống dẫn (\textit{concurrent pipeline}). 
-Thuật toán hoạt động dựa trên ý tưởng cốt lõi là kết hợp đường ống Unix (\textit{pipe}) với thuật toán sàng số nguyên tố, được đề xuất bởi Doug McIlroy, một nhà khoa học máy tính tại Bell Labs và là người phát minh ra khái niệm Unix Pipeline \cite{mcilroy1968coroutines, mcilroy1978unix}. 
-Mô hình này đại diện cho kiến trúc tính toán dòng dữ liệu CSP (\textit{Communicating Sequential Processes}) được khởi xướng bởi C. A. R. Hoare \cite{hoare1978csp}, đồng thời vận dụng trực tiếp các cơ chế quản lý tiến trình và giao tiếp liên tiến trình (IPC) trong hệ điều hành xv6 \cite{xv6book, remzi2018ostep}.
+\texttt{primes.c} hiện thực thuật toán Sàng Eratosthenes đồng thời
+(\textit{Concurrent Prime Sieve}) để tìm các số nguyên tố trong khoảng
+$2$ đến $280$. Thay vì lọc tuần tự trong một tiến trình, chương trình tổ
+chức các tiến trình thành một chuỗi nối với nhau qua
+Unix pipe. Mỗi tiến trình phụ trách một số nguyên tố, loại các bội số
+của nó và chuyển những số còn lại đến tiến trình kế tiếp. Cách triển
+khai này phù hợp với yêu cầu của bài thực hành xv6 Utilities Lab do MIT
+cung cấp \cite{mitxv6util2024}.
 
-\begin{figure}[H]
+Ý tưởng sàng nguyên tố bằng chuỗi tiến trình được tài liệu của MIT ghi
+nhận là bắt nguồn từ Doug McIlroy, người có đóng góp quan trọng đối với
+cơ chế Unix pipe \cite{mitxv6util2024}. Việc kết nối đầu ra của một
+tiến trình với đầu vào của tiến trình khác cũng phản ánh rất rõ triết lý thiết
+kế công cụ Unix \cite{mcilroy1978unix}. Các tiến
+trình độc lập trao đổi dữ liệu qua các kênh giao tiếp có sự tương đồng
+với \textit{Communicating Sequential Processes} (CSP) của C. A. R.
+Hoare \cite{hoare1978csp}. Trên xv6, chương trình vận dụng các lời gọi
+hệ thống \texttt{pipe()}, \texttt{fork()}, \texttt{read()},
+\texttt{write()} và \texttt{wait()} để tổ chức, giao tiếp và đồng bộ
+các tiến trình \cite{xv6book,remzi2018ostep}.
+
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{images/primes_pipeline.pdf}
-    \caption{Pipeline sàng nguyên tố đồng thời trong \texttt{primes.c}}
+    \includegraphics[width=\linewidth]{images/primes_pipeline.pdf}
+    \caption{Pipeline sàng nguyên tố đồng thời trong \texttt{primes.c}.}
     \label{fig:primes_pipeline}
 \end{figure}
 
-\noindent Luồng thực thi diễn ra tuần tự qua các giai đoạn:
+\noindent Luồng thực thi gồm ba giai đoạn chính:
 \begin{itemize}
-    \item \textbf{Khởi tạo:} Tạo \code{pipe 0}, thực hiện \code{fork()} để tạo tiến trình con lọc đầu tiên, sau đó ghi dãy số từ $2$ đến $280$ vào đầu ghi của \code{pipe 0}.
-    \item \textbf{Bước lọc:} Mỗi tiến trình đọc số nguyên đầu tiên $p$ từ pipe bên trái (\code{left\_fd}). Theo giả thuyết, ban đầu số $2$ là số đầu tiên, và cũng là số nguyên tố, 
-    do đó sau khi lọc qua các bội của 2 thì số $p$ tiếp theo chắc chắn là số nguyên tố và được in ra màn hình. 
-    Kế tiếp, tiến trình tạo một pipe mới (\code{new\_pipe}), \code{fork()} tiến trình con kế tiếp, 
-    rồi tiếp tục quá trình lọc: đọc các số $n$ còn lại, nếu $n \pmod p \neq 0$ thì đẩy vào \code{new\_pipe}.
-    \item \textbf{Kết thúc:} Khi đường ống bên trái đóng hoàn toàn, hàm \code{read()} trả về giá trị $\le 0$ (EOF). Tiến trình thực hiện đóng đầu pipe, gọi \code{wait(0)} để đợi tiến trình con và thoát an toàn.
+    \item \textbf{Khởi tạo:} Tiến trình chính tạo \texttt{pipe 0}, gọi
+    \texttt{fork()} để tạo tầng lọc đầu tiên, sau đó ghi lần lượt các
+    số nguyên từ $2$ đến $280$ vào đầu ghi của pipe.
+
+    \item \textbf{Lọc số nguyên tố:} Mỗi tầng đọc giá trị đầu tiên $p$
+    từ pipe bên trái (\texttt{left\_fd}). Do luồng đầu vào được sắp
+    tăng dần và đã loại bỏ các bội số của các số nguyên tố trước đó,
+    $p$ là một số nguyên tố và được in ra màn hình. Tiến trình tạo
+    một pipe mới (\texttt{new\_pipe}) và một tiến trình con để đảm
+    nhiệm tầng kế tiếp; các giá trị $n$ thỏa $n \bmod p \neq 0$
+    được chuyển sang pipe mới. Quá trình này tiếp diễn dọc theo
+    chuỗi pipeline.
+
+    \item \textbf{Kết thúc:} Khi mọi đầu ghi tương ứng đã được đóng
+    và dữ liệu trong pipe đã được đọc hết, \texttt{read()} trả về
+    $0$ (EOF); giá trị âm biểu thị lỗi đọc, không phải EOF.
+    Từng tiến trình đóng các file descriptor còn sử dụng, gọi
+    \texttt{wait(0)} để thu hồi tiến trình con nếu có, rồi thoát.
+    Tiến trình chính chỉ kết thúc sau khi toàn bộ pipeline đã được
+    thu hồi \cite{mitxv6util2024,xv6pipe}.
 \end{itemize}
 
-\subsection{Khó khăn và Thử thách}
-Dựa trên các đặc thù kiến trúc và giới hạn tài nguyên của hệ điều hành xv6 \cite{xv6book}, trong quá trình làm và triển khai thì nhóm có thấy được một vài điểm cần lưu ý:
+\subsection{Khó khăn và thử thách}
+Trong quá trình triển khai trên xv6, nhóm cần xử lý ba vấn đề liên
+quan đến đồng bộ và giới hạn tài nguyên:
 \begin{enumerate}
-    \item \textbf{Vấn đề Deadlock:} 
-    Khi \code{write(pipe[1], ...)} mà chưa có \code{read(pipe[0], ...)} đọc dữ liệu, hoặc khi một tiến trình con chưa đóng hoàn toàn đầu ghi pipe của nó, hệ thống có thể rơi vào trạng thái \textit{deadlock}, tức là không tiến trình nào có thể tiếp tục thực thi. \\
-    \textit{Giải pháp:} Khởi tạo \code{fork()} trước khi bắt đầu ghi, giúp luồng dữ liệu được tiêu thụ đồng thời dạng streaming.
-    \item \textbf{Quản lý File Descriptor và EOF:}
-    Hàm \code{read()} chỉ trả về 0 khi toàn bộ các đầu ghi của pipe đó được đóng. Nếu tiến trình con không đóng đầu ghi thừa kế thừa từ cha, lệnh \code{read()} sẽ chờ vĩnh viễn. Ngoài ra, xv6 giới hạn mỗi process chỉ có 16 FDs (\code{NOFILE}). \\
-    \textit{Giải pháp:} Tiến trình con lập tức \code{close(new\_pipe[1])} và \code{close(left\_fd)}; tiến trình cha \code{close(new\_pipe[0])} và \code{close(new\_pipe[1])} ngay sau khi đẩy hết dãy số.
-    \item \textbf{Hiện tượng Zombie Process và Cơ chế kết thúc dây chuyền (Cascading Termination):} \\
-    Trong thuật toán này, mỗi số nguyên tố tìm thấy sẽ sinh ra một tiến trình mới, tạo thành một chuỗi ống dẫn sâu gồm hàng chục tiến trình lồng nhau (tiệm cận giới hạn \code{NPROC = 64} của xv6 \cite{xv6book}). Nếu tiến trình cha kết thúc trước khi tiến trình con hoàn tất hoặc không thu hồi con, bảng tiến trình của hệ điều hành sẽ bị cạn kiệt do ngập tràn các tiến trình ma (\textit{Zombie process}), đồng thời shell xv6 sẽ in dấu nhắc lệnh xen ngang kết quả in của các tiến trình con. Ngược lại, nếu cha gọi \code{wait()} trước khi đóng hoàn toàn đầu ghi, tiến trình con sẽ chờ \code{read()} vô tận gây ra lỗi treo hệ thống (\textit{deadlock}). \\
-    \textit{Giải pháp:} Thiết lập thứ tự thu hồi tài nguyên dạng dây chuyền từ dưới lên (\textit{bottom-up}): tiến trình cha chỉ gọi \code{wait(0)} sau khi đã ghi hết số và đóng đầu ghi (báo hiệu EOF xuôi dòng). Tiến trình con nhận EOF, chuyển tiếp cho tầng sau rồi mới đợi con của nó và thoát, bảo đảm mọi tiến trình đều được giải phóng tuần tự theo thứ tự ngược lại trước khi \code{main} trả quyền điều khiển về cho hệ điều hành.
+    \item \textbf{Rủi ro về thứ tự đọc, ghi và chờ tiến trình:}
+    Pipe có bộ đệm hữu hạn; khi bộ đệm đầy, \texttt{write()} có thể bị
+    chặn để chờ tiến trình khác đọc dữ liệu. Trạng thái chờ này không
+    tự bản thân nó là deadlock mà là rủi ro có thể xuất hiện nếu các tiến trình chờ
+    lẫn nhau, chẳng hạn tiến trình cha gọi \texttt{wait()} khi vẫn
+    giữ đầu ghi mà tiến trình con đang đợi EOF \cite{xv6pipe,xv6book}.
+
+    \textit{Giải pháp:} Nhóm tạo tiến trình đọc bằng \texttt{fork()}
+    trước khi truyền dãy số để dữ liệu được tiêu thụ theo cơ chế
+    streaming. Quan trọng hơn, mỗi tiến trình đóng các đầu pipe không
+    sử dụng và chỉ gọi \texttt{wait()} sau khi đã hoàn tất ghi, đóng
+    đầu ghi tương ứng.
+
+    \item \textbf{Quản lý file descriptor và điều kiện EOF:}
+    Trong xv6, \texttt{read()} trên một pipe rỗng chỉ trả về EOF khi
+    không còn đầu ghi nào mở \cite{xv6book}. Do \texttt{fork()} kế thừa các file
+    descriptor của tiến trình cha, việc bỏ sót một đầu ghi có thể khiến
+    tiến trình đọc tiếp tục chờ dù dữ liệu đã được truyền hết. Ngoài
+    ra, \texttt{NOFILE = 16} giới hạn số file descriptor được mở đồng
+    thời trong mỗi tiến trình \cite{xv6pipe,xv6param}.
+
+    \textit{Giải pháp:} Sau \texttt{fork()}, tiến trình con đóng đầu
+    ghi của \texttt{new\_pipe} và những descriptor không còn cần
+    thiết từ tầng trước. Tiến trình cha đóng đầu đọc của pipe mới,
+    chỉ giữ đầu ghi để chuyển các số hợp lệ; khi kết thúc vòng lọc,
+    tiến trình đóng đầu ghi nhằm truyền EOF cho tầng kế tiếp. Cách
+    quản lý này vừa bảo đảm điều kiện kết thúc, vừa hạn chế số
+    descriptor tồn tại không cần thiết.
+
+    \item \textbf{Thu hồi tiến trình và giới hạn tài nguyên:}
+    Mỗi số nguyên tố tạo ra một tầng lọc riêng, vì vậy chương trình
+    có thể hình thành một chuỗi gồm hàng chục tiến trình. Trong bản
+    xv6-riscv được tham chiếu, \texttt{NPROC = 64} là giới hạn số
+    tiến trình toàn hệ thống. Nếu các tầng không đóng pipe hoặc không
+    được đồng bộ hợp lý, tiến trình có thể tiếp tục bị chặn và chiếm
+    tài nguyên; đồng thời, tiến trình chính thoát quá sớm có thể khiến
+    dấu nhắc shell xuất hiện trước khi mọi kết quả được in xong
+    \cite{xv6param,mitxv6util2024}.
+
+    \textit{Giải pháp:} Nhóm tổ chức việc kết thúc theo chuỗi:
+    mỗi tầng đóng đầu ghi sau khi chuyển hết dữ liệu, chờ tiến trình
+    con của mình bằng \texttt{wait(0)} rồi mới thoát. Nhờ đó, việc
+    thu hồi diễn ra từ tầng cuối về tầng đầu và tiến trình chính
+    chỉ trả quyền điều khiển cho shell sau khi pipeline kết thúc.
 \end{enumerate}
 
 \section{tree.c}
 
 \subsection{Tổng quan}
-Lệnh \code{tree} dùng để hiển thị cấu trúc thư mục dạng cây, hỗ trợ hiển thị cấu trúc phân nhánh trực quan cùng các cờ tùy chọn \code{-L <depth>} (giới hạn độ sâu) và \code{-d} (chỉ hiển thị thư mục). 
-\begin{figure}[H]
+Lệnh \texttt{tree} hiển thị cấu trúc tệp và thư mục dưới dạng cây,
+giúp quan sát quan hệ phân cấp giữa các thư mục. Phiên bản của nhóm
+hỗ trợ cờ \texttt{-L} để giới hạn độ sâu duyệt và \texttt{-d} để
+chỉ hiển thị thư mục. Chương trình sử dụng duyệt theo chiều sâu
+(\textit{Depth-First Search}, DFS), kết hợp với cơ chế đọc
+\texttt{struct dirent} và truy xuất thông tin inode của hệ thống tệp
+xv6 \cite{xv6book,xv6fs}.
+
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.88\textwidth]{images/tree_workflow.pdf}
-    \caption{Sơ đồ luồng thực thi (Workflow) duyệt đệ quy DFS và định dạng nhánh cây trong \texttt{tree.c}}
+    \includegraphics[width=0.75\linewidth]{images/tree_workflow.pdf}
+    \caption{Luồng duyệt DFS và định dạng nhánh cây trong \texttt{tree.c}.}
     \label{fig:tree_workflow}
 \end{figure}
 
-\noindent Luồng thực thi diễn ra tuần tự qua các giai đoạn:
+\noindent Luồng thực thi gồm ba giai đoạn:
 \begin{itemize}
-    \item \textbf{Phân tích đối số (Argument Parsing):} Tiếp nhận các đối số dòng lệnh, xác định đường dẫn mục tiêu (mặc định là \code{"."}), các cờ \code{-d} và \code{-L <depth>}. Hàm \code{parse()} kiểm tra tính hợp lệ của chuỗi số và chủ động phát hiện tràn số nguyên \code{INT\_MAX}.
-    \item \textbf{Thu thập và Lọc danh mục con:} Mở thư mục với \code{O\_RDONLY}, đọc tuần tự từng bản ghi \texttt{struct dirent}, lọc bỏ liên kết vòng lặp (\code{"."}, \code{".."}) và inode rác (\code{inum == 0}). Danh sách các mục con hợp lệ được lưu trữ an toàn trong mảng động tự co giãn \code{children} trên heap.
-    \item \textbf{Định dạng phân nhánh và Đệ quy sâu (Hierarchical DFS Traversal):} Thực hiện \code{close(fd)} ngay khi hoàn tất đọc dữ liệu để giải phóng tài nguyên hệ thống. Duyệt mảng \code{children}, kết xuất các ký tự định dạng nhánh cây chuẩn (\texttt{|--}, \texttt{\textbackslash{}\_\_\_}, \texttt{|   }) dựa trên mảng trạng thái \code{ancestor\_has\_next}, sau đó tiến hành gọi đệ quy \code{tree()} cho các thư mục con theo chiều sâu.
+    \item \textbf{Phân tích đối số:} Chương trình xác định đường dẫn
+    mục tiêu (mặc định là \texttt{"."}) và xử lý các tùy chọn
+    \texttt{-d}, \texttt{-L} kèm độ sâu. Giá trị độ sâu được kiểm tra
+    về cú pháp và nguy cơ tràn số nguyên trước khi sử dụng.
+
+    \item \textbf{Thu thập và lọc mục con:} Chương trình mở thư mục
+    bằng \texttt{open()} với \texttt{O\_RDONLY}, đọc các bản ghi
+    \texttt{struct dirent}, bỏ qua \texttt{"."}, \texttt{".."}
+    và các entry trống có \texttt{inum == 0}. Các mục hợp lệ được
+    đưa vào mảng động \texttt{children}; việc lọc theo cờ
+    \texttt{-d} phải được tính đến trước khi xác định mục cuối
+    để định dạng nhánh chính xác.
+
+    \item \textbf{Định dạng và duyệt đệ quy:} Sau khi thu thập các
+    mục con, chương trình đóng descriptor của thư mục hiện tại
+    trước khi duyệt sâu. Khi hiển thị, chương trình sử dụng trạng
+    thái \texttt{ancestor\_has\_next} để quyết định vị trí vạch
+    nối dọc, khoảng thụt lề và nhánh cuối; sau đó tiếp tục gọi
+    đệ quy \texttt{tree()} cho từng thư mục con hợp lệ.
 \end{itemize}
 
-\subsection{Khó khăn và Thử thách}
-Dựa trên kiến trúc của hệ điều hành xv6 và các trường hợp phức tạp trong quản lý tệp tin \cite{xv6book}, nhóm nhận thấy các khó khăn như sau:
-
+\subsection{Khó khăn và thử thách}
+Với các giới hạn về descriptor, đường dẫn và cách lưu tên tệp trong
+xv6, nhóm tập trung xử lý những trường hợp sau:
 \begin{enumerate}
-    \item \textbf{Giới hạn File Descriptor (\code{NOFILE = 16}):} \\
-    Trong kernel xv6, mỗi tiến trình bị giới hạn cứng chỉ được mở tối đa 16 file descriptors đồng thời (\code{NOFILE = 16}) \cite{xv6book}. Nếu duy trì \code{fd} của thư mục đang mở trong khi gọi đệ quy sâu xuống các thư mục con, hệ thống sẽ nhanh chóng cạn kiệt FD khi độ sâu cây vượt quá ngưỡng cho phép, gây lỗi sập chương trình. \\
-    \textit{Giải pháp:} Đọc toàn bộ các mục con vào mảng động \code{children}, sau đó lập tức gọi lệnh \code{close(fd)} trước khi duyệt in và thực hiện bất kỳ lời gọi đệ quy nào. Kỹ thuật này giúp số lượng FD mở tại mỗi thời điểm chỉ là $O(1)$ (tối đa 1 FD trong lúc đọc), bảo đảm an toàn tuyệt đối với mọi độ sâu cấu trúc thư mục.
+    \item \textbf{Giới hạn file descriptor (\texttt{NOFILE = 16}):}
+    xv6 giới hạn số descriptor có thể mở đồng thời trong mỗi tiến
+    trình. Nếu giữ descriptor của mọi thư mục cha trong khi đệ quy
+    xuống các thư mục con, số descriptor đang mở có thể tăng theo độ
+    sâu cây, khiến \texttt{open()} thất bại khi đạt giới hạn
+    \cite{xv6param}.
 
-    \item \textbf{Xử lý chuỗi tên tệp thiếu ký tự kết thúc (\code{DIRSIZ = 14} Null-termination):} \\
-    Cấu trúc \texttt{struct dirent} của xv6 quy định mảng tên tệp \code{name[DIRSIZ]} với \code{DIRSIZ = 14}. Khi một tệp có tên đạt đúng 14 ký tự, hệ thống tệp không lưu ký tự kết thúc chuỗi \code{'\textbackslash{}0'}. Nếu thao tác trực tiếp bằng các hàm chuỗi tiêu chuẩn như \code{strlen()}, \code{strcpy()} hay \code{printf("\%s")}, chương trình sẽ đọc tràn sang vùng nhớ lân cận (\textit{buffer over-read}), dẫn đến hiển thị ký tự rác hoặc sai lệch đường dẫn. \\
-    \textit{Giải pháp:} Khởi tạo bộ đệm trung gian có kích thước \code{DIRSIZ + 1}, sao chép chính xác 14 bytes bằng \code{memmove(name, de.name, DIRSIZ)} và chủ động kết thúc chuỗi an toàn bằng lệnh \code{name[DIRSIZ] = 0} trước khi ghép chuỗi hay kiểm tra \code{stat()}.
+    \textit{Giải pháp:} Nhóm đọc các mục con vào mảng động
+    \texttt{children}, sau đó gọi \texttt{close(fd)} trước khi
+    thực hiện các lời gọi đệ quy. Nhờ vậy, số descriptor mở thêm
+    do thao tác duyệt không tích lũy theo độ sâu cây, giảm nguy
+    cơ vượt giới hạn \texttt{NOFILE}.
 
-    \item \textbf{Kiểm soát tràn bộ đệm đường dẫn (\code{PATHSIZ = 128}) và Tính chịu lỗi (Fault Tolerance):} \\
-    Hệ thống giới hạn mảng đệm đường dẫn \code{PATHSIZ = 128}. Khi cây thư mục có nhiều cấp lồng nhau, việc nối thêm tên con có thể vượt quá kích thước bộ đệm. Cách xử lý thoát đột ngột (\code{exit}) sẽ làm gián đoạn toàn bộ quá trình duyệt cây của các nhánh khác. \\
-    \textit{Giải pháp:} Chương trình chủ động tính toán trước: nếu chiều dài đường dẫn cha cộng tên con và các ký tự phân tách vượt quá \code{sizeof(buf)}, hệ thống chỉ ghi cảnh báo ra \code{stderr}, đánh dấu mã trạng thái lỗi (\code{status = -1}), bỏ qua entry con bị tràn (\code{continue}) và tiếp tục duyệt các tệp tin hợp lệ còn lại trong cùng thư mục.
+    \item \textbf{Tên tệp không có ký tự kết thúc chuỗi
+    (\texttt{DIRSIZ = 14}):}
+    \texttt{struct dirent} lưu tên tệp bằng mảng
+    \texttt{name[DIRSIZ]}. Khi tên dài đúng 14 ký tự, mảng không
+    nhất thiết có byte kết thúc \texttt{NUL}; vì vậy, xử lý trực
+    tiếp như chuỗi C có thể dẫn đến đọc vượt ranh giới vùng nhớ
+    \cite{xv6fs,xv6book}.
 
-    \item \textbf{Quản lý bộ nhớ và Mảng động:} \\
-    Số lượng tập tin trong một thư mục là biến thiên và không thể xác định trước. Việc sử dụng mảng tĩnh kích thước lớn trên stack dễ gây tràn stack, trong khi mảng cố định quá nhỏ lại không thể chứa hết các thư mục lớn. \\
-    \textit{Giải pháp:} Sử dụng mảng động \code{children} với dung lượng khởi điểm $\text{capacity} = 8$. Khi số lượng phần tử đạt ngưỡng (\code{count == capacity}), chương trình nhân đôi dung lượng ($\text{capacity} \times 2$), cấp phát vùng nhớ mới, sao chép dữ liệu cũ qua \code{memmove()} và thu hồi vùng nhớ cũ bằng \code{free()}. Đồng thời, chương trình luôn kiểm tra con trỏ trả về từ \code{malloc()} để kịp thời báo lỗi nếu cạn kiệt heap, và giải phóng mảng ngay sau khi hoàn tất cấp duyệt.
+    \textit{Giải pháp:} Nhóm sử dụng bộ đệm
+    \texttt{name[DIRSIZ + 1]}, sao chép tối đa \texttt{DIRSIZ}
+    byte bằng \texttt{memmove()} rồi gán
+    \texttt{name[DIRSIZ] = '\textbackslash{}0'}. Tên tệp sau đó
+    mới được dùng để hiển thị hoặc ghép đường dẫn.
 
-    \item \textbf{Định dạng phân nhánh và truy vết các thư mục cha:} \\
-    Để vẽ đúng định dạng cây phân cấp (phần tử giữa dùng \texttt{|--}, phần tử cuối dùng \texttt{\textbackslash{}\_\_\_}), mỗi node cần xác định chính xác ở từng cấp tổ tiên phía trước còn phần tử tiếp theo hay không, và bản thân node có phải là phần tử cuối cùng của thư mục hiện tại hay không. \\
-    \textit{Giải pháp:} Sử dụng mảng cờ \code{char ancestor\_has\_next[PATHSIZ]}. Trước khi gọi đệ quy cấp $\text{level} + 1$, chương trình lưu trạng thái \code{ancestor\_has\_next[level] = !is\_last}. Khi in từng dòng, chương trình duyệt qua các cấp tổ tiên: in vạch dọc \texttt{|   } nếu cấp đó còn phần tử phía sau, ngược lại in khoảng trống thụt lề. Nút hiện tại được kết xuất bằng \texttt{\textbackslash{}\_\_\_ } nếu là phần tử cuối (\code{i == count - 1}) hoặc \texttt{|-- } nếu còn phần tử kế tiếp.
+    \item \textbf{Kiểm soát kích thước bộ đệm đường dẫn
+    (\texttt{PATHSIZ = 128}):}
+    Nhóm sử dụng bộ đệm đường dẫn có kích thước
+    \texttt{PATHSIZ = 128}, tương ứng với giá trị
+    \texttt{MAXPATH = 128} được định nghĩa trong
+    \texttt{kernel/param.h} của xv6-riscv. Khi duyệt nhiều cấp,
+    đường dẫn ghép từ tên thư mục cha và tên mục con có thể vượt
+    kích thước bộ đệm \cite{xv6param}.
 
-    \item \textbf{Phân tích đối số và tràn số (\textit{Integer Overflow}):} \\
-    Giá trị độ sâu nhập vào từ cờ \code{-L <depth>} có thể chứa ký tự không hợp lệ, chuỗi rỗng hoặc số quá lớn vượt quá giới hạn biểu diễn của số nguyên 32-bit có dấu. \\
-    \textit{Giải pháp:} Hiện thực hàm \code{parse(char *s)} an toàn: kiểm tra chuỗi rỗng \code{*s == '\textbackslash{}0'}, xác thực từng ký tự thuộc khoảng \code{'0'} đến \code{'9'}, và chủ động phát hiện tràn số trước mỗi phép nhân 10: \code{depth > (INT\_MAX - digit) / 10}. Đồng thời bắt lỗi cú pháp dòng lệnh (thiếu tham số cho \code{-L}, lặp đường dẫn), in thông báo \code{usage} và thoát với mã lỗi.
+    \textit{Giải pháp:} Trước khi ghép đường dẫn, chương trình
+    kiểm tra tổng chiều dài đường dẫn cha, ký tự phân cách, tên
+    con và byte kết thúc chuỗi. Nếu vượt kích thước cho phép,
+    chương trình thông báo lỗi, cập nhật \texttt{status = -1},
+    bỏ qua mục đang xét và tiếp tục các mục khác thay vì kết thúc
+    toàn bộ quá trình duyệt.
 
-    \item \textbf{Xử lý tệp tin hỏng và Đọc đĩa dở dang:} \\
-    Trong quá trình quét thư mục, một tệp tin con có thể gặp lỗi phân quyền hoặc tệp bị hỏng khiến \code{stat()} thất bại, hoặc thao tác đọc trả về số byte dở dang không đủ kích thước của một \texttt{struct dirent}. \\
-    \textit{Giải pháp:} Khi \code{stat()} thất bại, chương trình ghi nhận lỗi \texttt{cannot stat}, cập nhật mã trạng thái \code{status = -1} và tiếp tục duyệt các tệp khác thay vì dừng toàn bộ chương trình. Đồng thời kiểm tra biến \code{bytes\_read != 0} sau vòng lặp đọc để phát hiện lỗi đọc đĩa và trả mã thoát chuẩn \code{exit(status < 0 ? 1 : 0)}.
+    \item \textbf{Cấp phát bộ nhớ cho danh sách mục con:}
+    Số lượng mục trong mỗi thư mục thay đổi theo dữ liệu thực tế;
+    việc dùng một mảng cố định quá nhỏ có thể làm mất mục, trong
+    khi mảng quá lớn trên stack gây lãng phí bộ nhớ.
+
+    \textit{Giải pháp:} Mảng \texttt{children} được cấp phát trên
+    heap với dung lượng ban đầu bằng $8$. Khi số phần tử đạt
+    \texttt{capacity}, nhóm cấp phát mảng mới có dung lượng gấp
+    đôi, sao chép các phần tử bằng \texttt{memmove()} và giải
+    phóng mảng cũ. Kết quả \texttt{malloc()} được kiểm tra trước
+    khi sử dụng; bộ nhớ được thu hồi sau khi hoàn tất duyệt thư mục.
+
+    \item \textbf{Định dạng nhánh và lưu trạng thái tổ tiên:}
+    Để hiển thị cây đúng cấu trúc, chương trình cần biết ở mỗi cấp
+    tổ tiên còn mục nào phía sau hay không, đồng thời xác định mục
+    hiện tại có phải mục cuối trong danh sách đang hiển thị.
+
+    \textit{Giải pháp:} Nhóm sử dụng mảng
+    \texttt{ancestor\_has\_next[PATHSIZ]} để lưu trạng thái từng
+    cấp. Trước khi gọi đệ quy xuống cấp \texttt{level + 1}, chương
+    trình gán \texttt{ancestor\_has\_next[level] = !is\_last}. Khi
+    in một dòng, các cấp tổ tiên còn mục tiếp theo được thể hiện
+    bằng vạch dọc, còn các cấp đã kết thúc dùng khoảng trắng. Nhánh
+    hiện tại được chọn theo \texttt{is\_last}, tính trên danh sách
+    đã áp dụng bộ lọc hiển thị (nếu có).
+
+    \item \textbf{Kiểm tra đối số và ngăn tràn số nguyên:}
+    Tham số theo sau \texttt{-L} có thể là chuỗi rỗng, chứa ký tự
+    không phải chữ số hoặc biểu diễn giá trị vượt giới hạn số
+    nguyên có dấu 32-bit.
+
+    \textit{Giải pháp:} Hàm \texttt{parse(char *s)} kiểm tra từng
+    ký tự và lấy chữ số \texttt{digit}; trước khi cập nhật
+    \texttt{depth = depth * 10 + digit}, chương trình kiểm tra
+    điều kiện \texttt{depth > (INT\_MAX - digit) / 10} để
+    phát hiện tràn số. Các trường hợp thiếu giá trị của
+    \texttt{-L} hoặc truyền đối số không hợp lệ được xử lý
+    bằng thông báo hướng dẫn sử dụng và mã thoát lỗi.
+
+    \item \textbf{Xử lý lỗi khi truy xuất hệ thống tệp:}
+    Các thao tác \texttt{open()}, \texttt{stat()} và
+    \texttt{read()} có thể thất bại. Với \texttt{read()},
+    ngoài giá trị âm biểu thị lỗi, chương trình cũng cần phân
+    biệt trường hợp số byte đọc được không đủ kích thước một
+    \texttt{struct dirent}; việc duyệt thư mục trong xv6 dựa
+    trên các bản ghi có kích thước cố định \cite{xv6book,xv6fs}.
+
+    \textit{Giải pháp:} Nhóm ghi nhận lỗi bằng biến
+    \texttt{status = -1} và tiếp tục xử lý các mục còn lại
+    khi có thể. Nếu \texttt{stat()} của một mục thất bại,
+    mục đó được bỏ qua; nếu thao tác đọc thư mục thất bại,
+    chương trình dừng việc đọc thư mục hiện tại, giải phóng
+    tài nguyên và báo lỗi. Mã thoát cuối cùng được xác định
+    bằng \texttt{exit(status < 0 ? 1 : 0)}.
 \end{enumerate}

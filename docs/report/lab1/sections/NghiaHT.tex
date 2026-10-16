@@ -1,42 +1,82 @@
+% Hai section thay thế: diff.c và du.c
+% Giữ các macro \code{} của báo cáo gốc.
+% Preamble cần: \usepackage{graphicx}, \usepackage{float}, \usepackage{enumitem}.
+
 \section{diff.c}
 
 \subsection{Tổng quan}
-\texttt{diff.c} được hiện thực nhằm so sánh hai tập tin văn bản theo từng dòng chuẩn POSIX \cite{posix2018diff}, dựa trên nguyên lý so khớp chuỗi ký tự trong các hệ thống Unix \cite{hunt1976algorithm}. Mục tiêu chính là phát hiện vị trí chênh lệch, in chi tiết nội dung phân kỳ hoặc ngắt nhanh để kiểm tra tính toàn vẹn của tệp tin.
+\texttt{diff.c} được xây dựng nhằm so sánh hai tệp văn bản theo từng dòng và thông báo
+những vị trí có nội dung khác nhau. Chương trình tham khảo chức năng của
+\texttt{diff} trên Unix và quy ước mã thoát được quy định trong đặc tả POSIX
+\cite{posix2018diff}. Tuy nhiên, thay vì tìm một tập phép thêm, xóa hoặc thay đổi
+dòng để biến đổi tệp thứ nhất thành tệp thứ hai như \texttt{diff} tiêu chuẩn, phiên bản
+của nhóm so sánh trực tiếp các dòng ở cùng vị trí. Vì vậy, đầu ra phản ánh sự khác biệt
+theo chỉ số dòng, không phải một bản mô tả chỉnh sửa tối thiểu như các thuật toán so
+sánh tệp truyền thống \cite{hunt1976algorithm}.
 
-Trong hệ điều hành xv6, thư viện chuẩn không hỗ trợ các hàm đọc dòng như \texttt{getline()} hay \texttt{fgets()} \cite{xv6book}. Do đó, nhóm đã tự xây dựng hàm \code{readline()} đọc trực tiếp từng byte từ file descriptor kết hợp với kỹ thuật cấp phát bộ đệm tự co giãn trên heap.
+Trong xv6, thư viện người dùng chỉ cung cấp một tập hàm tương đối hạn chế, không có sẵn
+các hàm đọc dòng như \texttt{getline()} hay \texttt{fgets()} \cite{xv6book}. Do đó, nhóm
+xây dựng hàm \code{readline()} để đọc dữ liệu từ file descriptor bằng \code{read()},
+đồng thời quản lý bộ đệm động và trạng thái ký tự xuống dòng.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.68\textwidth]{images/diff_workflow.pdf}
-    \caption{Sơ đồ luồng thực thi (Workflow) và cơ chế so khớp dòng trong \texttt{diff.c}}
+    \includegraphics[width=0.52\textwidth]{images/diff_workflow.pdf}
+    \caption{Sơ đồ luồng thực thi và cơ chế so sánh dòng trong \texttt{diff.c}}
     \label{fig:diff_workflow}
 \end{figure}
 
-\noindent Luồng thực thi diễn ra tuần tự qua các giai đoạn:
+\noindent Luồng thực thi gồm các giai đoạn:
 \begin{itemize}[noitemsep, topsep=2pt]
-    \item \textbf{Khởi tạo và kiểm tra tệp:} Phân tích đối số dòng lệnh, mở \code{fd1}, \code{fd2} với cờ \code{O\_RDONLY} và dùng \code{fstat()} kiểm tra cả hai đều là tệp thường (\code{st.type == T\_FILE}), tránh đọc nhầm vào thư mục hay thiết bị.
-    \item \textbf{Đọc dòng song song và cấp phát động:} Khởi tạo hai bộ đệm độc lập $128\text{ bytes}$. Khi dòng vượt sức chứa (\code{len + 1 >= cap}), bộ đệm tự nhân đôi dung lượng qua \code{malloc()} và \code{memmove()}, giải phóng vùng nhớ cũ an toàn.
-    \item \textbf{So khớp và in kết quả:} Tại mỗi bước lặp, so sánh chiều dài, cờ \code{has\_newline} và gọi \code{strcmp()}. Nếu khác biệt, hàm \code{print\_line()} in tiền tố \code{<} cho tệp 1 và \code{>} cho tệp 2 kèm chỉ số dòng hiện hành.
+    \item \textbf{Mở và kiểm tra tệp:} Phân tích tham số dòng lệnh, mở hai tệp với cờ
+        \code{O\_RDONLY}, sau đó dùng \code{fstat()} để xác nhận cả hai là tệp thường
+        (\code{st.type == T\_FILE}), tránh xử lý nhầm thư mục hoặc thiết bị.
+    \item \textbf{Đọc từng dòng:} Hàm \code{readline()} sử dụng hai bộ đệm độc lập, mỗi
+        bộ đệm có dung lượng ban đầu 128 byte. Khi một dòng dài hơn sức chứa hiện tại,
+        chương trình cấp phát vùng nhớ mới với dung lượng gấp đôi, sao chép dữ liệu bằng
+        \code{memmove()} và giải phóng vùng nhớ cũ.
+    \item \textbf{So sánh và xuất kết quả:} Với mỗi cặp dòng cùng chỉ số, chương trình
+        đối chiếu chiều dài, cờ \code{has\_newline} và nội dung bằng \code{strcmp()}.
+        Khi phát hiện khác biệt, hàm \code{print\_line()} hiển thị dòng tương ứng của
+        từng tệp với tiền tố \code{<} và \code{>} cùng số dòng để người dùng xác định vị
+        trí sai khác.
 \end{itemize}
 
 \subsection{Khó khăn và Thử thách}
-Dựa trên kiến trúc của hệ điều hành xv6 và các trường hợp phức tạp khi xử lý tệp văn bản \cite{xv6book}, nhóm nhận thấy các khó khăn như sau:
+Trong quá trình triển khai, nhóm tập trung xử lý các trường hợp biên liên quan đến việc
+đọc dòng và quản lý tài nguyên trên xv6:
 
 \begin{enumerate}[noitemsep, topsep=2pt]
-    \item \textbf{Xử lý lệch số dòng giữa hai tệp:}
-    Khi hai tệp lệch số dòng, một bên sẽ gặp EOF (\code{len == 0}) trước. Cách so sánh thông thường dễ đọc dữ liệu rác hoặc dừng sớm làm sót nội dung chênh lệch ở tệp dài hơn. \\
-    \textit{Giải pháp:} Hàm \code{print\_line()} hỗ trợ nhận con trỏ rỗng (\code{line == 0}). Khi một tệp hết trước, chương trình in chuỗi chuẩn \code{EOF} (ví dụ \texttt{f1:4: < EOF}), đồng thời duy trì vòng lặp đọc và in dữ liệu thực tế của tệp còn lại cho đến khi cả hai kết thúc hoàn toàn.
+    \item \textbf{Hai tệp có số dòng khác nhau:}
+    Khi một tệp kết thúc trước tệp còn lại, chương trình phải phân biệt được trạng thái
+    hết tệp (EOF) với một dòng rỗng hợp lệ. Nếu chỉ dựa vào độ dài nội dung bằng 0, việc
+    so sánh có thể dừng sớm hoặc bỏ sót những dòng còn lại. \\
+    \textit{Giải pháp:} Nhóm xử lý riêng trạng thái kết thúc của từng luồng đọc. Hàm
+    \code{print\_line()} cho phép biểu diễn phía đã hết tệp bằng \code{EOF}, đồng thời
+    tiếp tục đọc và hiển thị những dòng còn lại ở phía kia cho đến khi cả hai luồng đều
+    kết thúc. Cách xử lý này bảo toàn thông tin về các dòng dư, dù không tự động căn
+    chỉnh những đoạn văn bản bị thêm hoặc xóa ở giữa tệp.
 
-    \item \textbf{Xử lý dòng cuối thiếu ký tự ngắt dòng:}
-    Tệp tin thiếu ký tự \code{'\textbackslash{}n'} ở dòng cuối có thể làm ghép sai nội dung theo chuẩn POSIX. \\
-    \textit{Giải pháp:} Hàm \code{readline()} quản lý cờ trạng thái \code{has\_newline}. Nếu dòng cuối không chứa \code{'\textbackslash{}n'}, chương trình chủ động ngắt dòng và in cảnh báo: \texttt{diff: <file>:<line>: no newline at end of file}.
+    \item \textbf{Dòng cuối không có ký tự xuống dòng:}
+    Hai dòng có cùng chuỗi ký tự nhưng khác nhau về việc có kết thúc bằng
+    \code{'\textbackslash n'} hay không không nên bị xem là hoàn toàn giống nhau. Đây là
+    một trường hợp cần lưu ý khi so sánh tệp văn bản theo dòng \cite{posix2018diff}. \\
+    \textit{Giải pháp:} Hàm \code{readline()} lưu cờ \code{has\_newline} cho mỗi dòng và
+    đưa cờ này vào điều kiện so sánh. Nếu dòng cuối không có ký tự xuống dòng, chương
+    trình chủ động xuống dòng khi xuất kết quả và thông báo \texttt{no newline at end of
+    file} để phân biệt hai trường hợp.
 
-    \item \textbf{Tối ưu cờ ngắt nhanh (\code{-q}) và mã thoát:}
-    Trong kiểm thử tự động, chương trình chỉ cần kết luận hai tệp có tương đương hay không mà không cần tiêu tốn I/O để in chi tiết. \\
-    \textit{Giải pháp:} Khi bật cờ \code{-q}, chương trình ngắt vòng lặp ngay tại chênh lệch đầu tiên (\code{is\_diff = 1}) và in \texttt{diff: files differ}. Toàn bộ bộ đệm động và FD đều được giải phóng trước khi thoát. Chương trình trả về mã thoát chuẩn: \code{exit(0)} (trùng khớp), \code{exit(1)} (khác biệt) và \code{exit(2)} (lỗi I/O).
+    \item \textbf{Chế độ so sánh nhanh và mã thoát:}
+    Khi chỉ cần biết hai tệp có khác nhau hay không, việc in toàn bộ các dòng sai khác
+    gây ra I/O không cần thiết. Tùy chọn \code{-q} được tham khảo từ chế độ
+    \textit{brief} của GNU Diffutils \cite{gnudiffmanual}. \\
+    \textit{Giải pháp:} Khi bật \code{-q}, chương trình dừng ở khác biệt đầu tiên, đặt
+    \code{is\_diff = 1} và in thông báo \texttt{diff: files differ}. Trước khi thoát,
+    chương trình đóng các file descriptor và giải phóng bộ đệm đã cấp phát. Mã thoát
+    được quy ước là \code{0} nếu hai tệp giống nhau, \code{1} nếu có khác biệt và
+    \code{2} nếu xảy ra lỗi, tương thích với quy ước của \texttt{diff} trong POSIX
+    \cite{posix2018diff}.
 \end{enumerate}
-
-\newpage
 
 \section{du.c}
 
@@ -48,7 +88,7 @@ Trong hệ thống tệp xv6 \cite{xv6book}, một thư mục được tổ ch�
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.70\textwidth]{images/du_workflow.pdf}
-    \caption{Sơ đồ luồng thực thi (Workflow) duyệt đệ quy Bottom-up và giải phóng FD sớm trong \texttt{du.c}}
+    \caption{Sơ đồ luồng thực thi duyệt đệ quy Bottom-up và giải phóng FD sớm trong \texttt{du.c}}
     \label{fig:du_workflow}
 \end{figure}
 
