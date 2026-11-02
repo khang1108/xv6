@@ -1,0 +1,49 @@
+\section{Bảng phân công nhiệm vụ}
+
+Bảng \ref{tab:contribution} tổng kết chi tiết phân công công việc, nhiệm vụ triển khai mã nguồn, xây dựng báo cáo và mức độ đóng góp của từng thành viên trong nhóm đối với Bài thực hành 01.
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabularx}{\textwidth}{l p{0.22\textwidth} X c}
+        \toprule
+        \textbf{Họ và tên} & \textbf{MSSV \& Vai trò} & \textbf{Nhiệm vụ đảm nhiệm} & \textbf{Đóng góp} \\
+        \midrule
+        Nguyễn Phúc Khang & 24120068 \newline (Nhóm trưởng)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Hiện thực chương trình \texttt{primes.c} (sàng nguyên tố qua pipeline, đồng bộ cascade wait).
+                    \item Hiện thực chương trình \texttt{tree.c} (duyệt cây thư mục DFS, hỗ trợ cờ \texttt{-L}, \texttt{-d}).
+                    \item Soạn thảo nội dung báo cáo mục \texttt{primes.c} và \texttt{tree.c}.
+                    \item Quản trị kho mã nguồn Git, thiết lập linter và đóng gói phát hành bài nộp.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \midrule
+        Hoàng Trọng Nghĩa & 24120103 \newline (Thành viên)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Hiện thực chương trình \texttt{diff.c} (so sánh tệp theo dòng, hỗ trợ cờ \texttt{-q}).
+                    \item Hiện thực chương trình \texttt{du.c} (tính dung lượng bottom-up, tối ưu $O(1)$ FD, hỗ trợ cờ \texttt{-a}, \texttt{-s}).
+                    \item Soạn thảo nội dung báo cáo mục \texttt{diff.c} và \texttt{du.c}.
+                    \item Kiểm thử các trường hợp biên và xử lý lỗi hệ thống.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \midrule
+        Phạm Minh Trọng & 24120151 \newline (Thành viên)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Hiện thực chương trình \texttt{pingpong.c} (giao tiếp IPC hai chiều qua hai pipe).
+                    \item Hiện thực chương trình \texttt{cp.c} (sao chép tệp theo khối, kiểm tra trùng inode).
+                    \item Soạn thảo nội dung báo cáo mục \texttt{pingpong.c} và \texttt{cp.c}.
+                    \item Thiết kế sơ đồ kiến trúc và luồng dữ liệu (workflow diagrams).
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Bảng phân công nhiệm vụ và mức độ hoàn thành của các thành viên trong nhóm}
+    \label{tab:contribution}
+\end{table}

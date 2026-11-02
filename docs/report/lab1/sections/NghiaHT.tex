@@ -5,14 +5,10 @@
 \section{diff.c}
 
 \subsection{Tổng quan}
-\texttt{diff.c} được xây dựng nhằm so sánh hai tệp văn bản theo từng dòng và thông báo
-những vị trí có nội dung khác nhau. Chương trình tham khảo chức năng của
-\texttt{diff} trên Unix và quy ước mã thoát được quy định trong đặc tả POSIX
-\cite{posix2018diff}. Tuy nhiên, thay vì tìm một tập phép thêm, xóa hoặc thay đổi
-dòng để biến đổi tệp thứ nhất thành tệp thứ hai như \texttt{diff} tiêu chuẩn, phiên bản
-của nhóm so sánh trực tiếp các dòng ở cùng vị trí. Vì vậy, đầu ra phản ánh sự khác biệt
-theo chỉ số dòng, không phải một bản mô tả chỉnh sửa tối thiểu như các thuật toán so
-sánh tệp truyền thống \cite{hunt1976algorithm}.
+\texttt{diff.c} thực hiện so sánh đối chiếu hai tệp văn bản theo từng cặp dòng có cùng 
+chỉ số và báo cáo các vị trí có nội dung sai lệch. Khi phát hiện khác biệt, chương trình 
+hiển thị nội dung các dòng tương ứng với tiền tố quy ước (\code{<} cho tệp thứ nhất và 
+\code{>} cho tệp thứ hai).
 
 Trong xv6, thư viện người dùng chỉ cung cấp một tập hàm tương đối hạn chế, không có sẵn
 các hàm đọc dòng như \texttt{getline()} hay \texttt{fgets()} \cite{xv6book}. Do đó, nhóm
@@ -72,8 +68,7 @@ Trong quá trình triển khai, nhóm tập trung xử lý các trường hợp 
 
     \item \textbf{Chế độ so sánh nhanh và mã thoát:}
     Khi chỉ cần biết hai tệp có khác nhau hay không, việc in toàn bộ các dòng sai khác
-    gây ra I/O không cần thiết. Tùy chọn \code{-q} được tham khảo từ chế độ
-    \textit{brief} của GNU Diffutils \cite{gnudiffmanual}. \\
+    gây ra I/O không cần thiết. \\
     \textit{Giải pháp:} Khi bật \code{-q}, chương trình dừng ở khác biệt đầu tiên, đặt
     \code{is\_diff = 1} và in thông báo \texttt{diff: files differ}. Trước khi thoát,
     chương trình đóng các file descriptor và giải phóng bộ đệm đã cấp phát. Mã thoát
@@ -111,7 +106,7 @@ Trong hệ thống tệp xv6 \cite{xv6book}, một thư mục được tổ ch�
 
 \noindent Luồng thực thi diễn ra tuần tự qua các giai đoạn:
 \begin{itemize}[noitemsep, topsep=2pt]
-    \item \textbf{Khởi tạo và phân tích đối số:} Tiếp nhận tối đa một đường dẫn mục tiêu (mặc định là \code{"."}), phân tích cờ tóm tắt \code{-s} (chỉ in kết quả đường dẫn gốc) và cờ chi tiết \code{-a} (in thêm kích thước tệp con). Khi kết hợp hai cờ, \code{-s} ẩn mọi kết quả mục con.
+    \item \textbf{Khởi tạo và phân tích đối số:} Tiếp nhận tối đa một đường dẫn mục tiêu (mặc định là \code{"."}), phân tích cờ tóm tắt \code{-s} (chỉ in kết quả đường dẫn gốc) và cờ chi tiết \code{-a} (in thêm kích thước tệp con).
     \item \textbf{Điều kiện dừng (Base Case):} Sử dụng \code{stat(path, \&st)}. Nếu đường dẫn trỏ tới một tệp tin thường (\code{T\_FILE}) hoặc tệp thiết bị (\code{T\_DEVICE}), kích thước \code{st.size} được trả về ngay lập tức; đồng thời in thông tin ra màn hình nếu đường dẫn là gốc được chỉ định hoặc có cờ \code{-a} (\code{is\_root || (a \&\& !s)}).
     \item \textbf{Duyệt con và cộng dồn (Bottom-up):} Khi gặp thư mục (\code{T\_DIR}), chương trình quét nội dung thư mục, lưu danh sách các tên tệp con hợp lệ, rồi gọi đệ quy \code{du(buf, a, s, 0)}. Chỉ kết quả không âm mới được cộng vào \code{total\_size}. Sau khi mọi mục con được xử lý thành công, thư mục in tổng nếu là gốc hoặc không bật \code{-s}, rồi trả tổng về cho cha. Nếu một mục lỗi, nhánh hiện tại dừng và trả \code{-1}.
 \end{itemize}
