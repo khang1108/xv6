@@ -92,6 +92,9 @@ struct proc {
   int xstate;                  // Exit status to be returned to parent's wait
   int pid;                     // Process ID
 
+  //! New definition
+  uint trace_mask; // Dùng để lưu mask bit theo dõi các syscall cần trace.
+
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process
 

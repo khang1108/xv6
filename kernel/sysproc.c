@@ -5,6 +5,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -90,4 +91,46 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+
+//! New definition
+uint64 sys_trace(void)
+{
+  // Hàm này dùng để lưu được mask truyền vào từ user.
+  // và lưu vào struct `proc`
+  int mask;
+
+  argint(0, &mask);
+  
+  myproc()->trace_mask = mask;
+
+  return 0;
+}
+
+uint64 sys_ptree(void)
+{
+  uint64 uaddr;
+  int max;
+
+  argaddr(0,  &uaddr);
+  argint(1, &max);
+
+  return get_ptree(uaddr, max);
+}
+
+uint64 sys_sysinfo(void)
+{
+  uint64 uaddr;
+  argaddr(0, &uaddr);
+
+  struct sysinfo info;
+  info.freemem = count_freemem();
+  info.nproc = count_proc();
+
+  struct proc* p = myproc();
+  if(copyout(p->pagetable, uaddr, (char*)&info, sizeof(info)) < 0){
+    return -1;
+  }
+  return 0;
 }

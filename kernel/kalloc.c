@@ -18,9 +18,11 @@ struct run {
   struct run *next;
 };
 
+// Bộ nhớ vật lý được xv6 quản lý thông `knem`
+// Mỗi phần tử trong danh sách có kích thước đúng `PGSIZE`
 struct {
   struct spinlock lock;
-  struct run *freelist;
+  struct run *freelist; // Bằng một danh sách liên kết tự do
 } kmem;
 
 void
@@ -79,4 +81,20 @@ kalloc(void)
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
+}
+
+//! New definition
+// Xây dựng một helper function để có thể đếm được các mem còn trống
+uint64 count_freemem(void)
+{
+  struct run* r; // dùng để lưu trữ một con trỏ để duyệt qua danh sách.
+  uint64 count = 0;
+
+  acquire(&kmem.lock);
+  for(r = kmem.freelist; r != 0; r = r->next){
+    count++;
+  }
+  release(&kmem.lock);
+
+  return count * PGSIZE;
 }

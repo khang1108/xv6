@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "ptree.h"
 
 struct cpu cpus[NCPU];
 
@@ -112,7 +113,9 @@ allocproc(void)
   struct proc *p;
 
   for(p = proc; p < &proc[NPROC]; p++) {
+    // Duyệt qua từng proc để tìm proc có state là UNUSED
     acquire(&p->lock);
+
     if(p->state == UNUSED) {
       goto found;
     } else {
@@ -122,8 +125,13 @@ allocproc(void)
   return 0;
 
 found:
+  // Khởi tạo một proc mới kèo PID
   p->pid = allocpid();
   p->state = USED;
+
+  // Vì đề bài yêu cầu khi một syscall được trace thì các syscall con
+  // kèm theo cũng bị trace, do đó:
+  p->trace_mask = 0; //! Gán để biết được proc chưa được trace. 
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -308,7 +316,10 @@ fork(void)
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
 
+  // Tạo một process mới
   safestrcpy(np->name, p->name, sizeof(p->name));
+  // Tương tự lý do ở `allocproc()` thì
+  np->trace_mask = p->trace_mask; // Copy trace mask để đánh dấu theo dõi
 
   pid = np->pid;
 
@@ -692,4 +703,77 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+int get_ptree(uint64 uaddr, int max)
+{
+  struct proc* p; // For iterating
+  struct proc* curr = myproc();
+
+  struct ptreeinfo info;
+  int count = 0;
+
+  if(max <= 0 || uaddr == 0){
+    return -1;
+  }
+
+  // Duyệt từng process hiện có
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(count >= max) break;
+
+    // Chiếm lấy lock của process hiện tại
+    acquire(&p->lock);
+
+    if(p->state == UNUSED){
+      // Tiến trình này chưa được sử dụng
+      release(&p->lock);
+      continue;
+    }
+
+    info.pid = p->pid;
+    info.state = p->state;
+    info.memsize = p->sz;
+    safestrcpy(info.name, p->name, sizeof(info.name));
+
+    if(p->parent){
+      info.ppid = p->parent->pid;
+    }
+    else info.ppid = 0;
+
+    release(&p->lock);
+
+    // Địa chỉ mới = địa chỉ cũ cộng thêm cho số lượng phần tử ptreeinfo
+    uint64 dst = uaddr + (uint64)count * sizeof(struct ptreeinfo);
+    
+    // Vì kernel và user dùng hai bảng phân trang khác nhau. User sẽ dùng p->pagetable
+    // để trỏ tới 0x3ff0 rồi tới RAM còn kernel không có 0x3ff0 -> Page Fault.
+    if(copyout(curr->pagetable, dst, (char*)&info, sizeof(info)) < 0){
+      return -1; // Lỗi copy
+    }
+    count++;
+  }
+
+  return count;
+}
+
+//! New definition
+// Thiết kế một helper function để đếm được các tiến trình đang được sử
+// dụng
+uint64 count_proc(void)
+{
+  struct proc* p;
+  uint64 count = 0;
+
+  for(p = proc; p < &proc[NPROC]; p++){
+    // acquire ở đây để chiếm lock hiện tại tránh tình trạng đọc 
+    // p->state không an toàn, bị race condition khi mà một
+    // tiến trình khác đang `exit()` hoặc là `allocproc()`
+    acquire(&p->lock);
+    if(p->state != UNUSED){
+      count++;
+    }
+    release(&p->lock);
+  }
+
+  return count;
 }

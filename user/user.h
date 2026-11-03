@@ -1,4 +1,8 @@
+#include "kernel/ptree.h"
+#include "kernel/sysinfo.h"
+
 struct stat;
+struct sysinfo;
 
 // system calls
 int fork(void); // Dùng để tạo tiến trình con 
@@ -23,6 +27,13 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
+//! New definition
+//* Hàm trace nhận vào một ID định danh để có thể biết được
+//* cần theo dõi lệnh nào.
+int trace(int);
+int ptree(struct ptreeinfo*, int);
+int sysinfo(struct sysinfo*);
+
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
@@ -32,11 +43,11 @@ int strcmp(const char*, const char*);
 void fprintf(int, const char*, ...) __attribute__ ((format (printf, 2, 3)));
 void printf(const char*, ...) __attribute__ ((format (printf, 1, 2)));
 char* gets(char*, int max);
-uint strlen(const char*);
-void* memset(void*, int, uint);
+int strlen(const char*);
+void* memset(void*, int, int);
 int atoi(const char*);
-int memcmp(const void *, const void *, uint);
-void *memcpy(void *, const void *, uint);
+int memcmp(const void *, const void *, int);
+void *memcpy(void *, const void *, int);
 
 // umalloc.c
 void* malloc(uint);

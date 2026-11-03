@@ -200,8 +200,9 @@ UPROGS=\
 	$U/_du\
 	$U/_pingpong\
 	$U/_cp\
-
-
+	$U/_trace\
+	$U/_pstree\
+	$U/_sysinfotest\
 
 
 ifeq ($(LAB),syscall)
