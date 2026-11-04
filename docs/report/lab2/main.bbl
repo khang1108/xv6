@@ -7,7 +7,8 @@
 \providecommand{\BIBentrySTDinterwordspacing}{\spaceskip=0pt\relax}
 \providecommand{\BIBentryALTinterwordstretchfactor}{4}
 \providecommand{\BIBentryALTinterwordspacing}{\spaceskip=\fontdimen2\font plus
-\BIBentryALTinterwordstretchfactor\fontdimen3\font minus \fontdimen4\font\relax}
+\BIBentryALTinterwordstretchfactor\fontdimen3\font minus
+  \fontdimen4\font\relax}
 \providecommand{\BIBforeignlanguage}[2]{{%
 \expandafter\ifx\csname l@#1\endcsname\relax
 \typeout{** WARNING: IEEEtran.bst: No hyphenation pattern has been}%
@@ -21,9 +22,14 @@
 \BIBdecl
 
 \bibitem{hcmus_os_lab2}
-V.-L. Lê, \emph{{Project 2 -- System call: Tài liệu hướng dẫn thực hành môn Hệ điều hành}}, Khoa Công nghệ Thông tin, Trường Đại học Khoa học Tự nhiên, ĐHQG-HCM, 2024, tài liệu thực hành khóa học Hệ điều hành (Moodle FIT-HCMUS).
+V.-L. Lê, \emph{{Project 2 -- System call: Tài liệu hướng dẫn thực
+  hành môn Hệ điều hành}}, Khoa Công nghệ Thông tin, Trường
+  Đại học Khoa học Tự nhiên, ĐHQG-HCM, 2024, tài liệu thực
+  hành khóa học Hệ điều hành (Moodle FIT-HCMUS).
 
 \bibitem{xv6book}
-R.~Cox, F.~Kaashoek, and R.~Morris, \emph{{xv6}: A Simple, Unix-like Teaching Operating System}, 2024, rISC-V edition, revision 4. \url{https://pdos.csail.mit.edu/6.828/2024/xv6/book-riscv-rev4.pdf}.
+R.~Cox, F.~Kaashoek, and R.~Morris, \emph{{xv6}: A Simple, Unix-like Teaching
+  Operating System}, 2024, rISC-V edition, revision 4.
+  \url{https://pdos.csail.mit.edu/6.828/2024/xv6/book-riscv-rev4.pdf}.
 
 \end{thebibliography}

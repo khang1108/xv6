@@ -1,29 +1,16 @@
 \section{sysinfo.c}
-Trong các hệ điều hành hiện đại, việc theo dõi và giám sát tài nguyên
-phần cứng cùng trạng thái hoạt động của các tiến trình đóng vai trò
-then chốt trong công tác quản trị và tối ưu hóa hệ thống \cite{xv6book}.
-Tuy nhiên, phiên bản nguyên bản của xv6 lại chưa cung cấp một công cụ
-hay lời gọi hệ thống nào tương tự như lệnh \texttt{free} hay \texttt{uptime}
-trong Linux để người dùng có thể tra cứu nhanh lượng tài nguyên tức thời.
-Để giải quyết bài toán này, nhóm tiến hành xây dựng một system call mới
-với mã định danh \code{SYS\_sysinfo = 24} trong tệp tiêu đề
-\texttt{kernel/syscall.h} \cite{hcmus_os_lab2}.
-
-System call này nhận vào một đối số duy nhất là con trỏ trỏ tới cấu trúc
-\code{struct sysinfo} được định nghĩa trong tệp \texttt{kernel/sysinfo.h}.
-Cấu trúc này bao gồm $2$ trường dữ liệu cốt lõi: \code{freemem} (tổng dung
-lượng bộ nhớ vật lý còn trống, tính theo đơn vị byte) và \code{nproc} (tổng
-số lượng tiến trình đang tồn tại trong hệ thống với trạng thái khác \code{UNUSED}).
-Nhiệm vụ của kernel là truy xuất trực tiếp các cấu trúc dữ liệu nội bộ,
-tổng hợp chính xác hai thông số trên và chuyển giao an toàn về không gian người dùng.
+Để thu thập thông tin về tài nguyên hệ thống đang hoạt động, nhóm thiết lập thêm một system call mới với mã định danh 
+\code{SYS\_sysinfo = 24} trong file \texttt{kernel/syscall.h} \cite{hcmus_os_lab2}. Lời gọi hệ thống này nhận 
+vào một đối số duy nhất là con trỏ trỏ tới cấu trúc \code{struct sysinfo} được định nghĩa trong file \texttt{kernel/sysinfo.h}, 
+bao gồm $2$ trường dữ liệu chính: \code{freemem} (tổng dung lượng bộ nhớ vật lý còn trống tính theo byte) và \code{nproc} 
+(số lượng tiến trình có trạng thái khác \code{UNUSED}). Kernel có nhiệm vụ truy xuất các cấu trúc dữ liệu nội bộ để tính toán 
+chính xác hai thông số này và sao chép an toàn về không gian người dùng.
 
 \subsection{Triển khai}
-Để thực hiện thu thập dữ liệu một cách nhất quán và chuẩn module hóa, nhóm chia
+Để thực hiện việc thu thập dữ liệu nhất quán và hiệu quả, nhóm chia
 tiến trình xử lý thành ba thành phần: điều phối tiếp nhận tại \texttt{sysproc.c},
 đo lường bộ nhớ tự do trong \texttt{kalloc.c}, và đếm số lượng tiến trình còn sống
-trong \texttt{proc.c}.
-
-Đầu tiên, khi chương trình người dùng phát động lời gọi \code{sysinfo(\&info)},
+trong \texttt{proc.c}. Đầu tiên, khi chương trình người dùng phát động lời gọi \code{sysinfo(\&info)},
 kernel tiếp nhận yêu cầu tại hàm \code{sys\_sysinfo(void)} nằm trong
 \texttt{kernel/sysproc.c}. Tại đây, kernel sử dụng hàm trợ giúp \code{argaddr(0, \&uaddr)}
 để trích xuất địa chỉ ảo của vùng nhớ đệm do user cung cấp. Sau đó, hàm lần lượt
@@ -70,10 +57,10 @@ ngừa lỗi sập hệ thống, ngược lại trả về $0$ biểu thị thà
 
 \subsection{Kiểm thử}
 Sau khi hoàn tất quá trình triển khai, nhóm tiến hành đánh giá giải pháp thông qua
-bộ kiểm thử tích hợp \texttt{user/sysinfotest.c}. Đây là bộ kiểm thử tiêu chuẩn
-được thiết kế để thẩm định toàn diện từ tính chính xác của các thuật toán đếm tài
-nguyên, độ nhạy đối với biến động của hệ thống cho đến cơ chế phòng thủ trước các
-tham số đầu vào không hợp lệ (Bảng~\ref{tab:sysinfo_testcases}).
+bộ kiểm thử tích hợp \texttt{user/sysinfotest.c}. Bộ kiểm thử này được thiết kế
+để kiểm tra tính chính xác của số lượng trang nhớ trống và tiến trình hoạt động,
+cũng như khả năng xử lý an toàn khi người dùng truyền con trỏ không hợp lệ
+(Bảng~\ref{tab:sysinfo_testcases}).
 
 \begin{table}[htbp]
     \centering
@@ -88,19 +75,17 @@ tham số đầu vào không hợp lệ (Bảng~\ref{tab:sysinfo_testcases}).
         \texttt{testmem()} 
             & Dùng hàm \texttt{sbrk()} cấp phát liên tục từng trang cho đến khi cạn kiệt RAM để kiểm tra \texttt{freemem == 0}; sau đó giải phóng và cấp phát lại để kiểm tra bộ đếm byte tăng giảm chuẩn xác. \\
         \texttt{testproc()} 
-            & Ghi nhận \texttt{nproc} ban đầu, sinh tiến trình con bằng \texttt{fork()} để xác nhận \texttt{nproc} tăng đúng $1$ đơn vị; sau khi cha thu hồi con qua \texttt{wait()}, xác nhận \texttt{nproc} trở về giá trị cũ. \\
-        \texttt{testbad()} 
-            & Truyền trực tiếp con trỏ \texttt{NULL} (\texttt{0x0}) vào lời gọi hệ thống nhằm kiểm tra tính an toàn bộ nhớ và khả năng tự cô lập lỗi của tiến trình. \\
+            & Ghi nhận \texttt{nproc} ban đầu, sinh tiến trình con bằng \texttt{fork()} để xác nhận \texttt{nproc} tăng $1$ đơn vị; sau khi cha thu hồi con qua \texttt{wait()}, xác nhận \texttt{nproc} trở về giá trị cũ và mã thoát của con hợp lệ. \\
         \bottomrule
     \end{tabularx}
     \caption{Các kịch bản kiểm thử tính năng thu thập thông tin hệ thống}
     \label{tab:sysinfo_testcases}
 \end{table}
 
-Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fig:sysinfo_result}) chứng minh toàn bộ các kịch bản kiểm thử đều được vượt qua tuyệt đối:
+Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fig:sysinfo_result}) cho thấy chương trình đã vượt qua tất cả các bài kiểm tra:
 \begin{itemize}[noitemsep, topsep=2pt]
-    \item \textbf{Đo lường bộ nhớ chính xác và an toàn con trỏ (Hình~\ref{fig:sysinfo_result}):} Lời gọi hệ thống phản ánh đúng từng byte bộ nhớ vật lý tự do trong suốt quá trình cấp phát và thu hồi của \texttt{sbrk()}, đồng thời cơ chế \code{copyout()} đã cô lập và loại trừ triệt để nguy cơ sập kernel khi người dùng truyền vào các địa chỉ ảo không hợp lệ.
-    \item \textbf{Theo dõi biến động tiến trình thời gian thực:} Bộ đếm \code{nproc} ghi nhận tức thời sự thay đổi trạng thái của mảng tiến trình \code{proc[NPROC]}, tăng và giảm chính xác tương ứng với vòng đời sinh ra và kết thúc của tiến trình con mà không gặp phải bất kỳ hiện tượng tranh chấp dữ liệu (race condition) nào.
+    \item \textbf{Đo lường bộ nhớ chính xác và an toàn con trỏ (Hình~\ref{fig:sysinfo_result}):} Lời gọi hệ thống phản ánh đúng từng byte bộ nhớ vật lý tự do trong suốt quá trình cấp phát và thu hồi của \texttt{sbrk()}, đồng thời hàm \code{copyout()} phát hiện và xử lý an toàn khi người dùng truyền vào các địa chỉ ảo không hợp lệ mà không gây lỗi trang (page fault) cho kernel.
+    \item \textbf{Cập nhật số lượng tiến trình:} Bộ đếm \code{nproc} phản ánh đúng sự thay đổi số lượng tiến trình khi tiến trình con được tạo và kết thúc; việc sử dụng spinlock \code{p->lock} giúp đồng bộ hóa quá trình đọc trạng thái của từng tiến trình trong bảng \code{proc}.
 \end{itemize}
 
 \begin{figure}[H]
@@ -109,3 +94,4 @@ Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fi
     \caption{Ảnh chụp kết quả thực thi chương trình kiểm thử \texttt{sysinfotest} trên QEMU}
     \label{fig:sysinfo_result}
 \end{figure}
+

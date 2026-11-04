@@ -125,13 +125,13 @@ allocproc(void)
   return 0;
 
 found:
-  // Khởi tạo một proc mới kèo PID
+  // Khởi tạo một proc mới kèm PID
   p->pid = allocpid();
   p->state = USED;
 
-  // Vì đề bài yêu cầu khi một syscall được trace thì các syscall con
-  // kèm theo cũng bị trace, do đó:
-  p->trace_mask = 0; //! Gán để biết được proc chưa được trace. 
+  // Đặt mặt nạ theo dõi syscall về 0 (chưa được trace)
+  // để đảm bảo tính cô lập giữa các tiến trình độc lập
+  p->trace_mask = 0; 
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -705,50 +705,61 @@ procdump(void)
   }
 }
 
+//! New definition
+// Thu thập thông tin các tiến trình đang hoạt động (state != UNUSED)
+// và sao chép an toàn vào bộ đệm user thông qua copyout.
+// Trả về số phần tử thực tế đã ghi vào buf nếu thành công, hoặc -1 nếu lỗi.
 int get_ptree(uint64 uaddr, int max)
 {
-  struct proc* p; // For iterating
+  struct proc* p; // Con trỏ duyệt bảng tiến trình
   struct proc* curr = myproc();
 
   struct ptreeinfo info;
   int count = 0;
 
+  // Kiểm tra tính hợp lệ của tham số đầu vào
   if(max <= 0 || uaddr == 0){
     return -1;
   }
 
-  // Duyệt từng process hiện có
+  // Duyệt qua toàn bộ bảng tiến trình proc[NPROC]
   for(p = proc; p < &proc[NPROC]; p++){
     if(count >= max) break;
 
-    // Chiếm lấy lock của process hiện tại
+    // Chiếm giữ spinlock của tiến trình để đảm bảo tính nhất quán trên môi trường đa lõi (SMP)
     acquire(&p->lock);
 
     if(p->state == UNUSED){
-      // Tiến trình này chưa được sử dụng
+      // Bỏ qua các tiến trình chưa được cấp phát
       release(&p->lock);
       continue;
     }
+
+    // Xóa sạch toàn bộ cấu trúc (bao gồm cả padding bytes và phần đuôi name[16])
+    // trước khi điền dữ liệu để ngăn rò rỉ bộ nhớ kernel stack sang user space
+    memset(&info, 0, sizeof(info));
 
     info.pid = p->pid;
     info.state = p->state;
     info.memsize = p->sz;
     safestrcpy(info.name, p->name, sizeof(info.name));
 
+    // Xử lý an toàn ppid: tiến trình gốc initproc có p->parent == 0,
+    // cần kiểm tra con trỏ để tránh lỗi dereference NULL làm sập kernel
     if(p->parent){
       info.ppid = p->parent->pid;
     }
     else info.ppid = 0;
 
+    // Nhả khóa spinlock TRƯỚC KHI gọi copyout để tránh giữ khóa lâu trong khi truy cập bộ nhớ người dùng, giảm thiểu nguy cơ tắc nghẽn
     release(&p->lock);
 
-    // Địa chỉ mới = địa chỉ cũ cộng thêm cho số lượng phần tử ptreeinfo
+    // Tính toán địa chỉ đích trong không gian ảo của user theo độ dời byte
     uint64 dst = uaddr + (uint64)count * sizeof(struct ptreeinfo);
     
-    // Vì kernel và user dùng hai bảng phân trang khác nhau. User sẽ dùng p->pagetable
-    // để trỏ tới 0x3ff0 rồi tới RAM còn kernel không có 0x3ff0 -> Page Fault.
+    // Sao chép an toàn dữ liệu từ kernel stack sang không gian địa chỉ ảo của user process
     if(copyout(curr->pagetable, dst, (char*)&info, sizeof(info)) < 0){
-      return -1; // Lỗi copy
+      return -1; // Lỗi copyout (chẳng hạn địa chỉ user không hợp lệ)
     }
     count++;
   }
@@ -757,17 +768,14 @@ int get_ptree(uint64 uaddr, int max)
 }
 
 //! New definition
-// Thiết kế một helper function để đếm được các tiến trình đang được sử
-// dụng
+// Đếm tổng số lượng tiến trình đang tồn tại trong hệ thống với trạng thái khác UNUSED.
 uint64 count_proc(void)
 {
   struct proc* p;
   uint64 count = 0;
 
   for(p = proc; p < &proc[NPROC]; p++){
-    // acquire ở đây để chiếm lock hiện tại tránh tình trạng đọc 
-    // p->state không an toàn, bị race condition khi mà một
-    // tiến trình khác đang `exit()` hoặc là `allocproc()`
+    // Chiếm spinlock để tránh race condition khi CPU khác đang fork() hoặc exit()
     acquire(&p->lock);
     if(p->state != UNUSED){
       count++;

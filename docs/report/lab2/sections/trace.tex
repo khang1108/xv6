@@ -13,8 +13,7 @@ trí bit thứ $N$ (\code{1 << N}) trong mặt nạ theo dõi
 (\code{trace\_mask}). Nhờ cơ chế bitmask, chương trình người
 dùng có thể linh hoạt giám sát một hoặc nhiều syscall đồng 
 thời chỉ thông qua một số nguyên duy nhất, đồng thời cho phép 
-kernel kiểm tra điều kiện kích hoạt bằng phép toán bitwise 
-với độ phức tạp $O(1)$.
+kernel kiểm tra nhanh điều kiện kích hoạt thông qua phép toán bitwise.
 
 \subsection{Triển khai}
 Để triển khai được tính năng \texttt{trace}, nhóm cần tạo
@@ -63,7 +62,7 @@ sẽ in ra màn hình thông tin truy vết tương ứng theo đề bài yêu c
 là: \texttt{<pid>: syscall <name> -> <return\_val>}. 
 
 \subsection{Kiểm thử}
-Sau khi hoàn tất quá trình triển khai và xử lý lời gọi hệ thống \texttt{trace}, nhóm tiến hành xây dựng các kịch bản kiểm thử nhằm đánh giá toàn diện tính đúng đắn của giải pháp. Bộ kiểm thử bao phủ từ các chức năng cơ bản, trường hợp biên, tính kế thừa phân nhánh cho đến khả năng xử lý lỗi hệ thống và tham số đầu vào (Bảng~\ref{tab:trace_testcases}).
+Sau khi hoàn tất quá trình triển khai và xử lý lời gọi hệ thống \texttt{trace}, nhóm tiến hành xây dựng các kịch bản kiểm thử nhằm kiểm tra tính đúng đắn của giải pháp trên các trường hợp thông thường và trường hợp biên. Bộ kiểm thử bao phủ từ các chức năng cơ bản, trường hợp biên, tính kế thừa phân nhánh cho đến khả năng xử lý lỗi hệ thống và tham số đầu vào (Bảng~\ref{tab:trace_testcases}).
 
 \begin{table}[htbp]
     \centering
@@ -95,9 +94,9 @@ Sau khi hoàn tất quá trình triển khai và xử lý lời gọi hệ thố
     \label{tab:trace_testcases}
 \end{table}
 
-Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fig:trace_results} và Hình~\ref{fig:trace_edge}) chứng minh toàn bộ các trường hợp đều hoạt động chính xác theo đặc tả của đề bài:
+Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fig:trace_results} và Hình~\ref{fig:trace_edge}) cho thấy các kịch bản kiểm thử đều hoạt động đúng theo đặc tả của đề bài:
 \begin{itemize}[noitemsep, topsep=2pt]
-    \item \textbf{Theo dõi cơ bản và cô lập (Hình~\ref{fig:trace_results}):} Hệ thống lọc chính xác từng system call theo bitmask (như \texttt{read} ở Hình~\ref{fig:trace_32}, \texttt{exec} và \texttt{open} ở Hình~\ref{fig:trace_32896}, hoặc toàn bộ ở Hình~\ref{fig:trace_all}). Đồng thời, môi trường ngoài shell hoàn toàn không bị ảnh hưởng (Hình~\ref{fig:trace_none} và Hình~\ref{fig:trace_0}).
+    \item \textbf{Theo dõi cơ bản và cô lập (Hình~\ref{fig:trace_results}):} Hệ thống lọc chính xác từng system call theo bitmask (như \texttt{read} ở Hình~\ref{fig:trace_32}, \texttt{exec} và \texttt{open} ở Hình~\ref{fig:trace_32896}, hoặc toàn bộ ở Hình~\ref{fig:trace_all}). Đồng thời, tiến trình shell không bị ảnh hưởng (Hình~\ref{fig:trace_none} và Hình~\ref{fig:trace_0}), bảo đảm tính cô lập.
     \item \textbf{Kế thừa đa thế hệ (Hình~\ref{fig:trace_fork}):} Khi thực thi bài kiểm thử \texttt{forkforkfork}, các tiến trình con cháu liên tục kế thừa việc theo dõi \texttt{SYS\_fork} với các PID tăng dần ($146, 147, \dots$) cho đến khi bảng tiến trình đầy và trả về mã \texttt{-1}, kết thúc với \texttt{ALL TESTS PASSED}.
     \item \textbf{Xử lý ngoại lệ và tham số lỗi (Hình~\ref{fig:trace_edge}):} Khi gọi tệp không tồn tại (Hình~\ref{fig:trace_nofile}) hoặc truyền mặt nạ sai định dạng (Hình~\ref{fig:trace_invalid}), chương trình bắt lỗi chính xác và thông báo ra màn hình mà không làm sập hệ điều hành.
 \end{itemize}

@@ -95,19 +95,16 @@ sys_uptime(void)
 
 
 //! New definition
+// System call trace: lưu mặt nạ bitmask theo dõi syscall vào trường trace_mask của tiến trình hiện hành
 uint64 sys_trace(void)
 {
-  // Hàm này dùng để lưu được mask truyền vào từ user.
-  // và lưu vào struct `proc`
   int mask;
-
   argint(0, &mask);
-  
   myproc()->trace_mask = mask;
-
   return 0;
 }
 
+// System call ptree: thu thập danh sách tối đa max tiến trình đang hoạt động đổ về vùng đệm uaddr của user
 uint64 sys_ptree(void)
 {
   uint64 uaddr;
@@ -119,6 +116,7 @@ uint64 sys_ptree(void)
   return get_ptree(uaddr, max);
 }
 
+// System call sysinfo: thu thập thông tin tài nguyên hệ thống (freemem, nproc) và sao chép ra không gian user
 uint64 sys_sysinfo(void)
 {
   uint64 uaddr;

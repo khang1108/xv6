@@ -7,3 +7,4 @@
 \contentsline {section}{\numberline {3}pstree.c}{8}{section.3}%
 \contentsline {subsection}{\numberline {3.1}Triển khai}{8}{subsection.3.1}%
 \contentsline {subsection}{\numberline {3.2}Kiểm thử}{10}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Bảng phân công nhiệm vụ}{12}{section.4}%

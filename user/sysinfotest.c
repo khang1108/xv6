@@ -109,6 +109,16 @@ void testproc() {
         exit(0);
     }
     wait(&status);
+
+    // Kiểm tra mã thoát của tiến trình con:
+    // Đảm bảo tiến trình con thực thi thành công (exit code == 0).
+    // Nếu con gặp lỗi và gọi exit(1), cha bắt buộc phải báo lỗi và dừng kiểm thử ngay lập tức,
+    // tránh tình trạng dương tính giả (false positive) khi con thất bại mà cha vẫn báo OK.
+    if (status != 0) {
+        printf("sysinfotest: FAIL child process failed with status %d\n", status);
+        exit(1);
+    }
+
     sinfo(&info);
     if (info.nproc != nproc) {
         printf("sysinfotest: FAIL nproc is %ld instead of %ld\n", info.nproc,

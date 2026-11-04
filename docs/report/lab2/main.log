@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.29)  3 NOV 2026 09:21
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.29)  4 NOV 2026 21:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1531,7 +1531,8 @@ File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
 Package hyperref Info: Option `colorlinks' set `true' on input line 133.
 \c@subsubsubsection=\count427
  (./main.aux
-(./sections/trace.aux) (./sections/sysinfo.aux) (./sections/pstree.aux))
+(./sections/trace.aux) (./sections/sysinfo.aux) (./sections/pstree.aux)
+(./sections/contribution.aux))
 \openout1 = `main.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 177.
@@ -1639,7 +1640,7 @@ Package hyperref Info: Link coloring ON on input line 177.
 \openout5 = `main.out'.
 
  (./sections/title.tex
-<images/khtn.png, id=79, 597.9138pt x 597.9138pt>
+<images/khtn.png, id=83, 597.9138pt x 597.9138pt>
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
 Package pdftex.def Info: images/khtn.png  used on input line 12.
@@ -1686,68 +1687,68 @@ File: t5cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 64.
+Package pdftex.def Info: images/khtn.png  used on input line 63.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
 LaTeX Font Info:    Font shape `T5/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T5/cmtt/m/n' tried instead on input line 64.
+(Font)              Font shape `T5/cmtt/m/n' tried instead on input line 63.
 
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.64 
+l.63 
       [1
 
 ]
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 99.
+Package pdftex.def Info: images/khtn.png  used on input line 98.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
  [2]
-<images/trace_32.png, id=143, 592.2125pt x 83.31125pt>
+<images/trace_32.png, id=148, 592.2125pt x 83.31125pt>
 File: images/trace_32.png Graphic file (type png)
 <use images/trace_32.png>
-Package pdftex.def Info: images/trace_32.png  used on input line 109.
+Package pdftex.def Info: images/trace_32.png  used on input line 108.
 (pdftex.def)             Requested size: 200.75996pt x 28.24281pt.
-<images/trace_32896.png, id=144, 410.53375pt x 51.19125pt>
+<images/trace_32896.png, id=149, 410.53375pt x 51.19125pt>
 File: images/trace_32896.png Graphic file (type png)
 <use images/trace_32896.png>
-Package pdftex.def Info: images/trace_32896.png  used on input line 116.
+Package pdftex.def Info: images/trace_32896.png  used on input line 115.
 (pdftex.def)             Requested size: 200.75996pt x 25.03314pt.
-<images/trace_all.png, id=145, 513.92pt x 144.54pt>
+<images/trace_all.png, id=150, 513.92pt x 144.54pt>
 File: images/trace_all.png Graphic file (type png)
 <use images/trace_all.png>
-Package pdftex.def Info: images/trace_all.png  used on input line 124.
+Package pdftex.def Info: images/trace_all.png  used on input line 123.
 (pdftex.def)             Requested size: 200.75996pt x 56.46298pt.
-<images/trace_none.png, id=146, 339.2675pt x 36.135pt>
+<images/trace_none.png, id=151, 339.2675pt x 36.135pt>
 File: images/trace_none.png Graphic file (type png)
 <use images/trace_none.png>
-Package pdftex.def Info: images/trace_none.png  used on input line 131.
+Package pdftex.def Info: images/trace_none.png  used on input line 130.
 (pdftex.def)             Requested size: 200.75996pt x 21.3823pt.
-<images/trace_0.png, id=147, 240.9pt x 34.1275pt>
+<images/trace_0.png, id=152, 240.9pt x 34.1275pt>
 File: images/trace_0.png Graphic file (type png)
 <use images/trace_0.png>
-Package pdftex.def Info: images/trace_0.png  used on input line 136.
+Package pdftex.def Info: images/trace_0.png  used on input line 135.
 (pdftex.def)             Requested size: 200.75996pt x 28.44193pt.
-<images/trace_fork.png, id=148, 238.8925pt x 355.3275pt>
+<images/trace_fork.png, id=153, 238.8925pt x 355.3275pt>
 File: images/trace_fork.png Graphic file (type png)
 <use images/trace_fork.png>
-Package pdftex.def Info: images/trace_fork.png  used on input line 148.
+Package pdftex.def Info: images/trace_fork.png  used on input line 147.
 (pdftex.def)             Requested size: 154.58673pt x 229.92998pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 149--149
+Underfull \hbox (badness 10000) in paragraph at lines 148--148
 []\T5/cmr/m/n/9 (a) |K¸ thøa qua ph¥n nh¡nh
  []
 
-<images/trace_nofile.png, id=149, 278.03876pt x 85.31876pt>
+<images/trace_nofile.png, id=154, 278.03876pt x 85.31876pt>
 File: images/trace_nofile.png Graphic file (type png)
 <use images/trace_nofile.png>
-Package pdftex.def Info: images/trace_nofile.png  used on input line 156.
+Package pdftex.def Info: images/trace_nofile.png  used on input line 155.
 (pdftex.def)             Requested size: 191.97742pt x 58.91034pt.
-<images/trace_invalid.png, id=150, 348.30125pt x 55.20625pt>
+<images/trace_invalid.png, id=155, 348.30125pt x 55.20625pt>
 File: images/trace_invalid.png Graphic file (type png)
 <use images/trace_invalid.png>
-Package pdftex.def Info: images/trace_invalid.png  used on input line 164.
+Package pdftex.def Info: images/trace_invalid.png  used on input line 163.
 (pdftex.def)             Requested size: 191.97742pt x 30.42838pt.
 )
 File: images/khtn.png Graphic file (type png)
@@ -1768,25 +1769,24 @@ id.png>]
  (./sections/sysinfo.tex
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 46.
+Package pdftex.def Info: images/khtn.png  used on input line 44.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
  [5
 
 
 
 ]
-File: images/khtn.png Graphic file (type png)
-<use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 103.
-(pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
-
-[6]
-<images/sysinfo.png, id=188, 301.125pt x 100.375pt>
+<images/sysinfo.png, id=184, 301.125pt x 100.375pt>
 File: images/sysinfo.png Graphic file (type png)
 <use images/sysinfo.png>
-Package pdftex.def Info: images/sysinfo.png  used on input line 108.
+Package pdftex.def Info: images/sysinfo.png  used on input line 93.
 (pdftex.def)             Requested size: 230.04079pt x 76.68399pt.
-)
+File: images/khtn.png Graphic file (type png)
+<use images/khtn.png>
+Package pdftex.def Info: images/khtn.png  used on input line 97.
+(pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
+
+[6])
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
 Package pdftex.def Info: images/khtn.png  used on input line 199.
@@ -1806,74 +1806,136 @@ Package pdftex.def Info: images/khtn.png  used on input line 55.
 ]
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 97.
+Package pdftex.def Info: images/khtn.png  used on input line 98.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
  [9]
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 129.
+Package pdftex.def Info: images/khtn.png  used on input line 130.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
 
 [10]
-<images/pstree.png, id=214, 300.12125pt x 88.33pt>
+<images/pstree.png, id=218, 300.12125pt x 88.33pt>
 File: images/pstree.png Graphic file (type png)
 <use images/pstree.png>
-Package pdftex.def Info: images/pstree.png  used on input line 133.
+Package pdftex.def Info: images/pstree.png  used on input line 134.
 (pdftex.def)             Requested size: 259.31523pt x 76.32622pt.
 )
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
 Package pdftex.def Info: images/khtn.png  used on input line 200.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
- [11 <./images/pstree.png>] (./main.bbl)
+ [11 <./images/pstree.png>]
+\openout2 = `sections/contribution.aux'.
+
+ (./sections/contribution.tex
+Underfull \hbox (badness 1253) in paragraph at lines 46--46
+[]\T5/cmr/m/n/9 Xû lþ t½nh cæ lªp v  k¸ thøa
+ []
+
+
+Underfull \hbox (badness 5008) in paragraph at lines 46--46
+[]\T5/cmr/m/n/9 Hi»n thüc h m ^^_¸m bë nhî
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+\T5/cmr/m/n/9 trèng [] trong
+ []
+
+
+Underfull \hbox (badness 1242) in paragraph at lines 46--46
+[]\T5/cmr/m/n/9 Hi»n thüc h m ^^_¸m ti¸n tr¼nh
+ []
+
+
+Underfull \hbox (badness 1297) in paragraph at lines 46--46
+\T5/cmr/m/n/9 ho¤t ^^_ëng [] trong
+ []
+
+
+Underfull \hbox (badness 1990) in paragraph at lines 46--46
+\T5/cmr/m/n/9 to n qua \T5/cmtt/m/n/9 copyout()\T5/cmr/m/n/9 , kiºm thû
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+[]\T5/cmr/m/n/9 Hi»n thüc h m []
+ []
+
+
+Underfull \hbox (badness 3780) in paragraph at lines 46--46
+[]\T5/cmr/m/n/9 X¥y düng ch÷ìng tr¼nh ng÷íi
+ []
+
+
+Underfull \hbox (badness 3713) in paragraph at lines 46--46
+\T5/cmr/m/n/9 dòng \T5/cmtt/m/n/9 user/pstree.c \T5/cmr/m/n/9 vîi thuªt
+ []
+
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 209.
+Package pdftex.def Info: images/khtn.png  used on input line 50.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
- [12
+[12
+
+
+
+])
+File: images/khtn.png Graphic file (type png)
+<use images/khtn.png>
+Package pdftex.def Info: images/khtn.png  used on input line 201.
+(pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
+ [13] (./main.bbl)
+File: images/khtn.png Graphic file (type png)
+<use images/khtn.png>
+Package pdftex.def Info: images/khtn.png  used on input line 206.
+(pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
+ [14
 \def\@LN@column{1}
 
 
 ]
-runsystem(latexminted cleantemp  --timestamp 20261103092153 FAD58DE7366495DB465
+runsystem(latexminted cleantemp  --timestamp 20261104210830 FAD58DE7366495DB465
 0CFEFAC2FCD61)...executed safely (allowed).
 
  
 enddocument/afterlastpage (AED): lastpage setting LastPage.
 (./main.aux (./sections/trace.aux) (./sections/sysinfo.aux)
-(./sections/pstree.aux))
+(./sections/pstree.aux) (./sections/contribution.aux))
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 5F9B83F50B7139A0E42524BCCD55FAB2;906.
+(rerunfilecheck)             Checksum: 74361BE988A0BCFDC60E22F7318FA113;1092.
  ) 
 Here is how much of TeX's memory you used:
- 41164 strings out of 468995
- 883169 string characters out of 5460434
- 1653997 words of memory out of 5000000
- 69144 multiletter control sequences out of 15000+600000
- 646859 words of font info for 82 fonts, out of 8000000 for 9000
+ 41212 strings out of 468995
+ 884409 string characters out of 5460434
+ 1654997 words of memory out of 5000000
+ 69180 multiletter control sequences out of 15000+600000
+ 647196 words of font info for 83 fonts, out of 8000000 for 9000
  264 hyphenation exceptions out of 8191
- 100i,24n,116p,596b,908s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 100i,24n,116p,613b,1060s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-dist/font
 s/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf-dist/fonts/type1/public/a
 msfonts/cm/cmr9.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy1
 0.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/sha
-re/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/texmf-dist/f
-onts/type1/vntex/vnr/vnbx10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vn
-bx12.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnbx9.pfb></usr/share/tex
-mf-dist/fonts/type1/vntex/vnr/vnr10.pfb></usr/share/texmf-dist/fonts/type1/vnte
-x/vnr/vnr8.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnr9.pfb></usr/shar
-e/texmf-dist/fonts/type1/vntex/vnr/vnti10.pfb></usr/share/texmf-dist/fonts/type
-1/vntex/vnr/vntt10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vntt8.pfb><
-/usr/share/texmf-dist/fonts/type1/vntex/vnr/vntt9.pfb>
-Output written on main.pdf (14 pages, 499673 bytes).
+re/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/share/texmf-dist/f
+onts/type1/public/cm-super/sfrm1000.pfb></usr/share/texmf-dist/fonts/type1/vnte
+x/vnr/vnbx10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnbx12.pfb></usr/
+share/texmf-dist/fonts/type1/vntex/vnr/vnbx9.pfb></usr/share/texmf-dist/fonts/t
+ype1/vntex/vnr/vnr10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnr8.pfb>
+</usr/share/texmf-dist/fonts/type1/vntex/vnr/vnr9.pfb></usr/share/texmf-dist/fo
+nts/type1/vntex/vnr/vnti10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnt
+t10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vntt8.pfb></usr/share/texm
+f-dist/fonts/type1/vntex/vnr/vntt9.pfb>
+Output written on main.pdf (16 pages, 515796 bytes).
 PDF statistics:
- 314 PDF objects out of 1000 (max. 8388607)
- 216 compressed objects within 3 object streams
- 38 named destinations out of 1000 (max. 500000)
- 284 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 333 PDF objects out of 1000 (max. 8388607)
+ 231 compressed objects within 3 object streams
+ 42 named destinations out of 1000 (max. 500000)
+ 292 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -1,0 +1,50 @@
+\section{Bảng phân công nhiệm vụ}
+
+Bảng \ref{tab:contribution} tổng kết chi tiết phân công công việc, nhiệm vụ triển khai mã nguồn, xây dựng báo cáo và mức độ đóng góp của từng thành viên trong nhóm đối với Bài thực hành 02 -- System Call.
+
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabularx}{\textwidth}{l p{0.22\textwidth} X c}
+        \toprule
+        \textbf{Họ và tên} & \textbf{MSSV \& Vai trò} & \textbf{Nhiệm vụ đảm nhiệm} & \textbf{Đóng góp} \\
+        \midrule
+        Nguyễn Phúc Khang & 24120068 \newline (Nhóm trưởng)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Thiết kế và hiện thực system call \texttt{trace} (mã \code{SYS\_trace = 22}, mặt nạ bitmask \code{trace\_mask}).
+                    \item Xử lý tính cô lập và kế thừa tiến trình con qua \texttt{allocproc()} và \texttt{fork()}.
+                    \item Xây dựng chương trình người dùng \texttt{user/trace.c} và mảng điều phối \code{syscall\_names[]}.
+                    \item Soạn thảo nội dung báo cáo mục \texttt{trace.c}, tổng hợp tài liệu và quản trị kho Git.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \midrule
+        Hoàng Trọng Nghĩa & 24120103 \newline (Thành viên)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Thiết kế và hiện thực system call \texttt{sysinfo} (mã \code{SYS\_sysinfo = 24}, cấu trúc \code{struct sysinfo}).
+                    \item Hiện thực hàm đếm bộ nhớ trống \code{count\_freemem()} trong \texttt{kernel/kalloc.c} với khóa spinlock \code{kmem.lock}.
+                    \item Hiện thực hàm đếm tiến trình hoạt động \code{count\_proc()} trong \texttt{kernel/proc.c}.
+                    \item Triển khai cầu nối sao chép an toàn qua \texttt{copyout()}, kiểm thử \texttt{sysinfotest} và viết báo cáo mục \texttt{sysinfo.c}.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \midrule
+        Phạm Minh Trọng & 24120151 \newline (Thành viên)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Thiết kế và hiện thực system call \texttt{ptree} (mã \code{SYS\_ptree = 23}, cấu trúc \code{struct ptreeinfo}).
+                    \item Hiện thực hàm \code{get\_ptree()} trong kernel, xử lý con trỏ an toàn và cơ chế đồng bộ tránh deadlock.
+                    \item Xây dựng chương trình người dùng \texttt{user/pstree.c} với thuật toán duyệt cây theo chiều sâu (DFS Pre-order).
+                    \item Thiết kế các kịch bản kiểm thử phả hệ tiến trình, chụp minh chứng thực nghiệm và viết báo cáo mục \texttt{pstree.c}.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Bảng phân công nhiệm vụ và mức độ hoàn thành của các thành viên trong nhóm}
+    \label{tab:contribution}
+\end{table}
+

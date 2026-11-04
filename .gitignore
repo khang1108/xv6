@@ -19,6 +19,7 @@ user/usys.S
 xv6.out*
 .vagrant/
 submissions/
+submission/
 ph
 barrier
 /lab-*.json

@@ -33,8 +33,8 @@ chỉ bộ đệm ảo của user và \code{argint(1, \&max)} để lấy số l
 tử tối đa, sau đó chuyển tiếp các tham số này vào hàm xử lý lõi
 \code{get\_ptree(uaddr, max)} đặt tại \texttt{kernel/proc.c}.
 
-Quá trình thu thập thông tin trong hàm \code{get\_ptree} đòi hỏi phải tuân thủ
-nghiêm ngặt các nguyên tắc an toàn bộ nhớ và đồng bộ hóa. Đầu tiên, kernel
+Khi hiện thực hàm \code{get\_ptree}, kernel cần kiểm tra tính hợp lệ của tham số
+và sử dụng khóa để đồng bộ hóa dữ liệu. Đầu tiên, kernel
 tiến hành kiểm tra tính hợp lệ của đối số: nếu người dùng truyền vào
 \code{max <= 0} hoặc con trỏ rỗng (\code{uaddr == 0}), hệ thống sẽ lập tức
 từ chối và trả về $-1$. Kế tiếp, kernel duyệt qua bảng tiến trình
@@ -54,9 +54,10 @@ con trỏ rỗng khiến toàn bộ kernel bị sập. Do đó, hệ thống ch�
 khi \code{p->parent} tồn tại, ngược lại sẽ gán mặc định bằng $0$.
 
 Sau khi đã nạp đầy đủ thông tin vào biến tạm \code{info}, kernel lập tức gọi
-\code{release(\&p->lock)} trước khi tiến hành chuyển dữ liệu ra ngoài. Việc chủ
-động nhả spinlock trước khi thao tác trên bảng phân trang giúp tránh nghẽn CPU
-và triệt tiêu nguy cơ deadlock. Vì kernel và user sở hữu hai bảng phân trang hoàn
+\code{release(\&p->lock)} trước khi tiến hành chuyển dữ liệu ra ngoài. Việc giải
+phóng spinlock trước khi gọi \code{copyout} giúp tránh giữ khóa trong thời gian
+dài khi truy cập bộ nhớ người dùng, giảm thiểu nguy cơ tắc nghẽn và xung đột khóa.
+Vì kernel và user sở hữu hai bảng phân trang hoàn
 toàn độc lập (\code{kernel\_pagetable} và \code{p->pagetable}), địa chỉ ảo
 \code{uaddr} của user không hề tồn tại trong không gian của kernel. Do đó, ta tuyệt
 đối không thể ép kiểu con trỏ C để gán giá trị trực tiếp, mà bắt buộc phải sử
@@ -68,10 +69,10 @@ kernel sẽ lập tức dừng lại và trả về $-1$.
 
 \paragraph*{Tái tạo cây và In}: Sau khi kernel đã hoàn tất việc đổ dữ
 liệu phẳng về bộ đệm, bước tiếp theo là chương trình \texttt{user/pstree.c}
-sẽ dựng lại cây phả hệ cha -- con và in ra màn hình. Thay vì in trực tiếp
-từ kernel làm vi phạm nguyên tắc thiết kế tinh gọn của hệ điều hành, nhóm
-lựa chọn thuật toán duyệt theo chiều sâu (DFS -- Depth-First Search theo thứ
-tự Pre-order) bằng hàm đệ quy \code{print\_tree(pid, depth, procs, n)}.
+sẽ dựng lại cây phả hệ cha -- con và in ra màn hình. Để tuân thủ nguyên tắc tách biệt giữa tầng nhân (cung cấp dữ liệu thô) và tầng
+người dùng (xử lý định dạng và hiển thị), nhóm lựa chọn thuật toán duyệt theo
+chiều sâu (DFS -- Depth-First Search theo thứ tự Pre-order) bằng hàm đệ quy
+\code{print\_tree(pid, depth, procs, n)}.
 Nhóm quyết định dùng DFS thay vì duyệt theo chiều rộng (BFS -- Breadth-First
 Search) bởi vì trên giao diện dòng lệnh vốn chỉ có thể xuất văn bản tuần
 tự từ trên xuống, DFS cho phép in ngay tiến trình cha rồi đi sâu vào toàn
@@ -81,7 +82,7 @@ Ngược lại, nếu dùng BFS (duyệt theo mức), các tiến trình cùng �
 in dàn trải liên tiếp làm đứt gãy mạch phả hệ, đồng thời còn đòi hỏi phải
 cài đặt thêm cấu trúc hàng đợi (\texttt{Queue}) phức tạp vốn không có sẵn
 trong thư viện xv6. Hơn nữa, DFS đệ quy tận dụng trực tiếp ngăn xếp gọi hàm
-(Call Stack) giúp mã nguồn ngắn gọn và tiết kiệm bộ nhớ tối đa.
+(Call Stack) giúp mã nguồn ngắn gọn và không cần cấp phát thêm cấu trúc hàng đợi phụ trợ.
 
 Vì hàm \code{printf} tối giản của xv6 không hỗ trợ định dạng thụt lề
 tự động (\code{\%*s}) như thư viện chuẩn của C, nhóm dùng vòng lặp
@@ -96,7 +97,7 @@ biểu là \texttt{init}) để phát động hàm đệ quy từ gốc với \c
 Nhờ đó, cây tiến trình được hiển thị rõ ràng, trực quan và đúng chuẩn quan hệ phân cấp.
 
 \subsection{Kiểm thử}
-Sau khi hoàn tất quá trình triển khai system call \texttt{ptree} trong kernel và tiện ích \texttt{pstree} ở user space, nhóm tiến hành thiết lập các kịch bản kiểm thử nhằm đánh giá toàn diện tính đúng đắn của giải pháp từ cấu trúc hiển thị phả hệ, mức độ thụt lề cho đến khả năng đồng bộ dữ liệu và bắt lỗi tham số đầu vào (Bảng~\ref{tab:pstree_testcases}).
+Sau khi hoàn tất quá trình triển khai system call \texttt{ptree} trong kernel và tiện ích \texttt{pstree} ở user space, nhóm tiến hành thiết lập các kịch bản kiểm thử nhằm kiểm tra tính đúng đắn của giải pháp từ cấu trúc hiển thị phả hệ, mức độ thụt lề cho đến việc xử lý tham số đầu vào (Bảng~\ref{tab:pstree_testcases}).
 
 \begin{table}[htbp]
     \centering
@@ -113,19 +114,19 @@ Sau khi hoàn tất quá trình triển khai system call \texttt{ptree} trong ke
         \textbf{Tính chính xác của trạng thái} 
             & Kiểm tra trường \code{state}: tiến trình đang thực thi xuất dữ liệu mang trạng thái \code{RUNNING} ($4$), trong khi các tiến trình cha chờ đợi mang trạng thái \code{SLEEPING} ($2$). \\
         \textbf{Xác thực thông tin bộ nhớ} 
-            & Đảm bảo trường \code{memsize} trích xuất chính xác dung lượng bộ nhớ user (\code{p->sz}) được hệ thống cấp phát mà không làm rò rỉ vùng nhớ. \\
-        \textbf{Kiểm tra tham số biên} 
-            & Kiểm tra trường hợp truyền \code{max <= 0} hoặc con trỏ bộ đệm rỗng (\code{uaddr == 0}). Kernel từ chối thực thi và trả về mã lỗi $-1$ an toàn. \\
+            & Xác nhận trường \code{memsize} phản ánh đúng kích thước không gian nhớ của tiến trình (\code{p->sz}). \\
+        \textbf{Xử lý tham số biên} 
+            & Đảm bảo hàm xử lý tại tầng kernel luôn kiểm tra điều kiện đầu vào, từ chối thực thi và trả về mã lỗi $-1$ an toàn khi người dùng truyền \code{max <= 0} hoặc con trỏ bộ đệm rỗng (\code{uaddr == 0}). \\
         \bottomrule
     \end{tabularx}
     \caption{Các kịch bản kiểm thử tính năng hiển thị cây tiến trình}
     \label{tab:pstree_testcases}
 \end{table}
 
-Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fig:pstree_result}) chứng minh giải pháp hoạt động chính xác theo đúng đặc tả của bài thực hành:
+Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fig:pstree_result}) cho thấy chương trình hoạt động đúng theo đặc tả của bài thực hành:
 \begin{itemize}[noitemsep, topsep=2pt]
-    \item \textbf{Cấu trúc phả hệ phân tầng (Hình~\ref{fig:pstree_result}):} Cây tiến trình được dựng và in ra màn hình tuần tự với gốc là \texttt{init} (PID $1$, $\text{depth} = 0$). Tiến trình con \texttt{sh} (PID $2$, $\text{depth} = 1$) được thụt lề $2$ khoảng trắng, và tiến trình cháu \texttt{pstree} (PID $5$, $\text{depth} = 2$) do shell khởi sinh được thụt lề $4$ khoảng trắng, tái hiện hoàn hảo quan hệ phả hệ $3$ thế hệ.
-    \item \textbf{Tính toàn vẹn của dữ liệu và trạng thái:} Tất cả các thuộc tính bao gồm \code{pid}, tên tiến trình, trạng thái (\code{RUNNING} cho \texttt{pstree} và \code{SLEEPING} cho các tiến trình cha), cùng kích thước bộ nhớ (\code{mem=20480} và \code{mem=24576}) đều được kernel thu thập nhất quán và truyền an toàn ra không gian người dùng.
+    \item \textbf{Cấu trúc phả hệ phân tầng (Hình~\ref{fig:pstree_result}):} Cây tiến trình được dựng và in ra màn hình tuần tự với gốc là \texttt{init} (PID $1$, $\text{depth} = 0$). Tiến trình con \texttt{sh} (PID $2$, $\text{depth} = 1$) được thụt lề $2$ khoảng trắng, và tiến trình cháu \texttt{pstree} (PID $5$, $\text{depth} = 2$) do shell khởi sinh được thụt lề $4$ khoảng trắng, thể hiện rõ ràng quan hệ phả hệ qua $3$ thế hệ tiến trình.
+    \item \textbf{Tính chính xác của dữ liệu và trạng thái:} Tất cả các thuộc tính bao gồm \code{pid}, tên tiến trình, trạng thái (\code{RUNNING} cho \texttt{pstree} và \code{SLEEPING} cho các tiến trình cha), cùng kích thước bộ nhớ (\code{mem=20480} và \code{mem=24576}) đều được kernel thu thập nhất quán và truyền an toàn ra không gian người dùng.
 \end{itemize}
 
 \begin{figure}[H]
