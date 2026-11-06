@@ -36,7 +36,7 @@ void print_tree(
 
 int main(int argc, char* argv[])
 {
-    static struct ptreeinfo procs[NPROC]; //* Dùng static để tránh bị tràn stack khi đệ quy quá sâu. 
+    static struct ptreeinfo procs[NPROC]; //* Khai báo static để đưa mảng ~2.5KB sang vùng nhớ BSS, tránh chiếm dụng 60% stack user (4KB), dành trọn vẹn không gian ngăn xếp cho hàm đệ quy print_tree 
     // Gọi system call ptree để lấy danh sách tiến trình đang hoạt động từ kernel
     int n = ptree(procs, NPROC);
     if(n < 0){

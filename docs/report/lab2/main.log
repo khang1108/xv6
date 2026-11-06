@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.29)  4 NOV 2026 21:08
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.29)  6 NOV 2026 18:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1740,11 +1740,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 148--148
 []\T5/cmr/m/n/9 (a) |K¸ thøa qua ph¥n nh¡nh
  []
 
-<images/trace_nofile.png, id=154, 278.03876pt x 85.31876pt>
+<images/trace_nofile.png, id=154, 480.79625pt x 98.3675pt>
 File: images/trace_nofile.png Graphic file (type png)
 <use images/trace_nofile.png>
 Package pdftex.def Info: images/trace_nofile.png  used on input line 155.
-(pdftex.def)             Requested size: 191.97742pt x 58.91034pt.
+(pdftex.def)             Requested size: 191.97742pt x 39.27724pt.
 <images/trace_invalid.png, id=155, 348.30125pt x 55.20625pt>
 File: images/trace_invalid.png Graphic file (type png)
 <use images/trace_invalid.png>
@@ -1829,74 +1829,70 @@ Package pdftex.def Info: images/khtn.png  used on input line 200.
 \openout2 = `sections/contribution.aux'.
 
  (./sections/contribution.tex
-Underfull \hbox (badness 1253) in paragraph at lines 46--46
-[]\T5/cmr/m/n/9 Xû lþ t½nh cæ lªp v  k¸ thøa
- []
-
-
-Underfull \hbox (badness 5008) in paragraph at lines 46--46
-[]\T5/cmr/m/n/9 Hi»n thüc h m ^^_¸m bë nhî
+Underfull \hbox (badness 2221) in paragraph at lines 46--46
+[]\T5/cmr/m/n/8 X¥y düng ch÷ìng tr¼nh ng÷íi dòng
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 46--46
-\T5/cmr/m/n/9 trèng [] trong
+\T5/cmtt/m/n/8 user/trace.c \T5/cmr/m/n/8 v  m£ng ^^_i·u phèi
  []
 
 
-Underfull \hbox (badness 1242) in paragraph at lines 46--46
-[]\T5/cmr/m/n/9 Hi»n thüc h m ^^_¸m ti¸n tr¼nh
+Underfull \hbox (badness 3168) in paragraph at lines 46--46
+[]\T5/cmr/m/n/8 Thi¸t k¸ v  hi»n thüc sys-tem call
  []
 
 
-Underfull \hbox (badness 1297) in paragraph at lines 46--46
-\T5/cmr/m/n/9 ho¤t ^^_ëng [] trong
- []
-
-
-Underfull \hbox (badness 1990) in paragraph at lines 46--46
-\T5/cmr/m/n/9 to n qua \T5/cmtt/m/n/9 copyout()\T5/cmr/m/n/9 , kiºm thû
+Underfull \hbox (badness 1603) in paragraph at lines 46--46
+\T5/cmtt/m/n/8 sysinfo \T5/cmr/m/n/8 (m¢ [], c§u
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 46--46
-[]\T5/cmr/m/n/9 Hi»n thüc h m []
+[]\T5/cmr/m/n/8 Hi»n thüc h m ^^_¸m bë nhî
  []
 
 
-Underfull \hbox (badness 3780) in paragraph at lines 46--46
-[]\T5/cmr/m/n/9 X¥y düng ch÷ìng tr¼nh ng÷íi
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+\T5/cmr/m/n/8 trèng [] trong
  []
 
 
-Underfull \hbox (badness 3713) in paragraph at lines 46--46
-\T5/cmr/m/n/9 dòng \T5/cmtt/m/n/9 user/pstree.c \T5/cmr/m/n/9 vîi thuªt
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+\T5/cmtt/m/n/8 kernel/kalloc.c \T5/cmr/m/n/8 vîi khâa spin-lock
  []
 
-File: images/khtn.png Graphic file (type png)
-<use images/khtn.png>
-Package pdftex.def Info: images/khtn.png  used on input line 50.
-(pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
-[12
+
+Underfull \hbox (badness 3168) in paragraph at lines 46--46
+[]\T5/cmr/m/n/8 Thi¸t k¸ v  hi»n thüc sys-tem call
+ []
 
 
+Underfull \hbox (badness 2221) in paragraph at lines 46--46
+[]\T5/cmr/m/n/8 X¥y düng ch÷ìng tr¼nh ng÷íi dòng
+ []
 
-])
+)
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
 Package pdftex.def Info: images/khtn.png  used on input line 201.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
- [13] (./main.bbl)
+ [12
+
+
+
+] (./main.bbl)
 File: images/khtn.png Graphic file (type png)
 <use images/khtn.png>
 Package pdftex.def Info: images/khtn.png  used on input line 206.
 (pdftex.def)             Requested size: 22.7538pt x 22.7538pt.
- [14
+ [13
 \def\@LN@column{1}
 
 
 ]
-runsystem(latexminted cleantemp  --timestamp 20261104210830 FAD58DE7366495DB465
+runsystem(latexminted cleantemp  --timestamp 20261106181205 FAD58DE7366495DB465
 0CFEFAC2FCD61)...executed safely (allowed).
 
  
@@ -1911,11 +1907,11 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 74361BE988A0BCFDC60E22F7318FA113;1092.
  ) 
 Here is how much of TeX's memory you used:
- 41212 strings out of 468995
- 884409 string characters out of 5460434
+ 41227 strings out of 468995
+ 884559 string characters out of 5460434
  1654997 words of memory out of 5000000
- 69180 multiletter control sequences out of 15000+600000
- 647196 words of font info for 83 fonts, out of 8000000 for 9000
+ 69190 multiletter control sequences out of 15000+600000
+ 650448 words of font info for 93 fonts, out of 8000000 for 9000
  264 hyphenation exceptions out of 8191
  100i,24n,116p,613b,1060s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/
@@ -1923,19 +1919,20 @@ texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-dist/font
 s/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf-dist/fonts/type1/public/a
 msfonts/cm/cmr9.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy1
 0.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/sha
-re/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/share/texmf-dist/f
+re/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb></usr/share/texmf-dist/f
 onts/type1/public/cm-super/sfrm1000.pfb></usr/share/texmf-dist/fonts/type1/vnte
 x/vnr/vnbx10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnbx12.pfb></usr/
-share/texmf-dist/fonts/type1/vntex/vnr/vnbx9.pfb></usr/share/texmf-dist/fonts/t
-ype1/vntex/vnr/vnr10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnr8.pfb>
-</usr/share/texmf-dist/fonts/type1/vntex/vnr/vnr9.pfb></usr/share/texmf-dist/fo
-nts/type1/vntex/vnr/vnti10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnt
-t10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vntt8.pfb></usr/share/texm
-f-dist/fonts/type1/vntex/vnr/vntt9.pfb>
-Output written on main.pdf (16 pages, 515796 bytes).
+share/texmf-dist/fonts/type1/vntex/vnr/vnbx8.pfb></usr/share/texmf-dist/fonts/t
+ype1/vntex/vnr/vnbx9.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnr10.pfb
+></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnr8.pfb></usr/share/texmf-dist/f
+onts/type1/vntex/vnr/vnr9.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vnti
+10.pfb></usr/share/texmf-dist/fonts/type1/vntex/vnr/vntt10.pfb></usr/share/texm
+f-dist/fonts/type1/vntex/vnr/vntt8.pfb></usr/share/texmf-dist/fonts/type1/vntex
+/vnr/vntt9.pfb>
+Output written on main.pdf (15 pages, 538196 bytes).
 PDF statistics:
- 333 PDF objects out of 1000 (max. 8388607)
+ 334 PDF objects out of 1000 (max. 8388607)
  231 compressed objects within 3 object streams
- 42 named destinations out of 1000 (max. 500000)
+ 41 named destinations out of 1000 (max. 500000)
  292 words of extra memory for PDF output out of 10000 (max. 10000000)
 

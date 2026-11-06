@@ -18,7 +18,7 @@ kernel kiểm tra nhanh điều kiện kích hoạt thông qua phép toán bitwi
 \subsection{Triển khai}
 Để triển khai được tính năng \texttt{trace}, nhóm cần tạo
 được một file \texttt{trace.c} ở trong thư mục \texttt{user/}.
-Đây sẽ là nơi nhận lệnh \code{trace <mask\> <command\>}
+Đây sẽ là nơi nhận lệnh \code{trace \textless{}mask\textgreater{} \textless{}command\textgreater{}}
 để thực hiện quá trình theo dõi. Vì mỗi lệnh \texttt{trace} đều phải nhận 
 vào một mặt nạ, đại diện cho các system call đang được theo dõi
 tại một thời điểm $t$ nào đó. Do đó, ta phải định nghĩa một số nguyên
@@ -45,7 +45,7 @@ toàn bộ các tiến trình con cháu phân nhánh sau này đều được th
 liên tục mà vẫn bảo đảm tính cô lập, không làm ảnh hưởng đến các tiến 
 trình độc lập khác trong hệ thống.
 
-\paragraph*{Bắt và In}: Sau khi mà ta đã triển khai xong được cơ chế
+\paragraph*{Bắt và In:} Sau khi mà ta đã triển khai xong được cơ chế
 lưu trữ và kế thừa thì bước quan trọng tiếp theo đó chính là tiến hành
 bắt được các thông tin của syscall và in nó ra màn hình hệ thống tại
 hàm điều phối \code{syscall(void)} trong file \texttt{kernel/syscall.c}.
@@ -97,7 +97,7 @@ Sau khi hoàn tất quá trình triển khai và xử lý lời gọi hệ thố
 Kết quả thực nghiệm trên môi trường giả lập QEMU (Hình~\ref{fig:trace_results} và Hình~\ref{fig:trace_edge}) cho thấy các kịch bản kiểm thử đều hoạt động đúng theo đặc tả của đề bài:
 \begin{itemize}[noitemsep, topsep=2pt]
     \item \textbf{Theo dõi cơ bản và cô lập (Hình~\ref{fig:trace_results}):} Hệ thống lọc chính xác từng system call theo bitmask (như \texttt{read} ở Hình~\ref{fig:trace_32}, \texttt{exec} và \texttt{open} ở Hình~\ref{fig:trace_32896}, hoặc toàn bộ ở Hình~\ref{fig:trace_all}). Đồng thời, tiến trình shell không bị ảnh hưởng (Hình~\ref{fig:trace_none} và Hình~\ref{fig:trace_0}), bảo đảm tính cô lập.
-    \item \textbf{Kế thừa đa thế hệ (Hình~\ref{fig:trace_fork}):} Khi thực thi bài kiểm thử \texttt{forkforkfork}, các tiến trình con cháu liên tục kế thừa việc theo dõi \texttt{SYS\_fork} với các PID tăng dần ($146, 147, \dots$) cho đến khi bảng tiến trình đầy và trả về mã \texttt{-1}, kết thúc với \texttt{ALL TESTS PASSED}.
+    \item \textbf{Kế thừa đa thế hệ (Hình~\ref{fig:trace_fork}):} Khi thực thi bài kiểm thử \texttt{forkforkfork}, các tiến trình liên tục kế thừa việc theo dõi \texttt{SYS\_fork} với giá trị trả về của \texttt{fork} (PID của các tiến trình con được sinh ra) tăng dần ($146, 147, \dots$) cho đến khi bảng tiến trình đầy và trả về mã \texttt{-1}, kết thúc với \texttt{ALL TESTS PASSED}.
     \item \textbf{Xử lý ngoại lệ và tham số lỗi (Hình~\ref{fig:trace_edge}):} Khi gọi tệp không tồn tại (Hình~\ref{fig:trace_nofile}) hoặc truyền mặt nạ sai định dạng (Hình~\ref{fig:trace_invalid}), chương trình bắt lỗi chính xác và thông báo ra màn hình mà không làm sập hệ điều hành.
 \end{itemize}
 

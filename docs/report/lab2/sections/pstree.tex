@@ -63,11 +63,11 @@ toàn độc lập (\code{kernel\_pagetable} và \code{p->pagetable}), địa ch
 đối không thể ép kiểu con trỏ C để gán giá trị trực tiếp, mà bắt buộc phải sử
 dụng hàm \code{copyout()} của xv6 để kernel tự động tra cứu bảng phân trang của
 user và ghi dữ liệu an toàn vào đúng ô nhớ vật lý trong RAM. Vị trí ghi phần tử
-thứ \code{count} được tính toán theo độ dời byte: $\text{dst} = \text{uaddr} + \text{count} \times \text{sizeof}(\text{struct } ptreeinfo)$.
+thứ \code{count} được tính toán theo độ dời byte: $\text{dst} = \text{uaddr} + \text{count} \times \text{sizeof}(\text{struct } \texttt{ptreeinfo})$.
 Nếu hàm \code{copyout} gặp lỗi (chẳng hạn user truyền địa chỉ ảo ngoài phạm vi cấp phát),
 kernel sẽ lập tức dừng lại và trả về $-1$.
 
-\paragraph*{Tái tạo cây và In}: Sau khi kernel đã hoàn tất việc đổ dữ
+\paragraph*{Tái tạo cây và In:} Sau khi kernel đã hoàn tất việc đổ dữ
 liệu phẳng về bộ đệm, bước tiếp theo là chương trình \texttt{user/pstree.c}
 sẽ dựng lại cây phả hệ cha -- con và in ra màn hình. Để tuân thủ nguyên tắc tách biệt giữa tầng nhân (cung cấp dữ liệu thô) và tầng
 người dùng (xử lý định dạng và hiển thị), nhóm lựa chọn thuật toán duyệt theo

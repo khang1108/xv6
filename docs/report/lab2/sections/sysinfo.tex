@@ -42,7 +42,7 @@ thu dọn tiến trình (\code{exit}), hàm thực hiện duyệt tuần tự qu
 chiếm giữ khóa spinlock \code{acquire(\&p->lock)}, kiểm tra điều kiện trạng thái để
 tăng biến đếm và nhả khóa \code{release(\&p->lock)} một cách an toàn.
 
-\paragraph*{Sao chép an toàn ra User Space}: Sau khi đã thu thập đầy đủ thông tin
+\paragraph*{Sao chép an toàn ra User Space:} Sau khi đã thu thập đầy đủ thông tin
 vào biến cục bộ \code{struct sysinfo info}, bước quyết định là đưa kết quả ra
 vùng nhớ của chương trình người dùng. Vì kernel và user process hoạt động trên hai
 không gian địa chỉ ảo hoàn toàn biệt lập thông qua hai bảng phân trang riêng biệt
