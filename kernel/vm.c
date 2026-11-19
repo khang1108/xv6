@@ -273,6 +273,40 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
   return newsz;
 }
 
+// Print valid PTEs, descending only into lower-level page tables.
+static void
+vmprintwalk(pagetable_t pagetable, int depth)
+{
+  // bảng trang Sv39 chỉ có tối đa 3 cấp (depth 1..3),
+  // và KSTACK trong xv6 chỉ dài 1 trang (4KB), nên chặn sớm giúp tránh tràn
+  // kernel stack nếu bảng trang bị hỏng tạo vòng lặp hoặc nút không hợp lệ.
+  if(depth > 3)
+    return;
+
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    if((pte & PTE_V) == 0)
+      continue;
+
+    uint64 pa = PTE2PA(pte);
+    printf("..");
+    for(int j = 1; j < depth; j++)
+      printf(" ..");
+    printf("%d: pte %p pa %p\n", i, (void*)pte, (void*)pa);
+
+    if((pte & (PTE_R|PTE_W|PTE_X)) == 0)
+      vmprintwalk((pagetable_t)pa, depth + 1);
+  }
+}
+
+// Print the page-table root and its entries as a tree.
+void
+vmprint(pagetable_t pagetable)
+{
+  printf("page table %p\n", (void*)pagetable);
+  vmprintwalk(pagetable, 1);
+}
+
 // Recursively free page-table pages.
 // All leaf mappings must already have been removed.
 void
