@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xv6 Lab 3 — Page Table (Single-Page Scroll Guide)</title>
+  <style>
+    :root {
+      --bg: #f8f9fb;
+      --surface: #ffffff;
+      --surface-alt: #f1f5f9;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+
+      --kernel: #3b5bdb;
+      --kernel-bg: #edf2ff;
+      --kernel-border: #bac8ff;
+
+      --user: #0ca678;
+      --user-bg: #e6fcf5;
+      --user-border: #96f2d7;
+
+      --hw: #d97706;
+      --hw-bg: #fffbeb;
+      --hw-border: #fde68a;
+
+      --danger: #e11d48;
+      --danger-bg: #fff1f2;
+      --danger-border: #fecdd3;
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+      --radius: 8px;
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --duration-fast: 150ms;
+      --duration-ui: 200ms;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* Header */
+    .hero {
+      padding-bottom: 24px;
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-tag {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--kernel);
+      background: var(--kernel-bg);
+      border: 1px solid var(--kernel-border);
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--text-muted);
+    }
+
+    .toc {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .toc a {
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 5px 11px;
+      border-radius: 6px;
+      transition: border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+    }
+
+    .toc a:hover {
+      border-color: var(--kernel);
+      color: var(--kernel);
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 48px;
+      scroll-margin-top: 24px;
+    }
+
+    .step-kicker {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--kernel);
+      margin-bottom: 4px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      letter-spacing: -0.015em;
+    }
+
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .lead {
+      margin: 0 0 18px;
+      color: var(--text-muted);
+      font-size: 14.5px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      background: var(--surface-alt);
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--text-muted);
+    }
+
+    .badge.kernel { background: var(--kernel-bg); border-color: var(--kernel-border); color: var(--kernel); }
+    .badge.user { background: var(--user-bg); border-color: var(--user-border); color: var(--user); }
+    .badge.hw { background: var(--hw-bg); border-color: var(--hw-border); color: var(--hw); }
+    .badge.danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    button {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), transform 120ms var(--ease-out);
+    }
+
+    button:active { transform: scale(0.97); }
+    button:hover { background: var(--surface-alt); }
+    button.active, button.primary {
+      background: var(--kernel);
+      border-color: var(--kernel);
+      color: #ffffff;
+    }
+    button.primary:hover { background: #2f4bc7; }
+
+    /* Detail box */
+    .detail-box {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 6px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .detail-box h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-family: var(--mono);
+    }
+
+    /* 1. Sv39 Bar & PTE Bits */
+    .va-bar {
+      display: grid;
+      grid-template-columns: 2fr 1.4fr 1.4fr 1.4fr 1.6fr;
+      gap: 6px;
+      margin-bottom: 16px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      text-align: center;
+    }
+
+    .va-seg {
+      padding: 8px 4px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+    }
+
+    .va-seg strong {
+      display: block;
+      font-size: 12.5px;
+      color: var(--text);
+    }
+
+    .pte-bits {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    @media (max-width: 600px) {
+      .pte-bits { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .bit-cell {
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 9px 4px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      background: var(--surface);
+      transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), transform 120ms var(--ease-out);
+    }
+
+    .bit-cell:active { transform: scale(0.96); }
+
+    .bit-cell.on { background: var(--kernel-bg); border-color: var(--kernel); color: var(--kernel); }
+    .bit-cell.on.warn { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+    .bit-cell.on.hw { background: var(--hw-bg); border-color: var(--hw); color: var(--hw); }
+
+    .bit-num { font-family: var(--mono); font-size: 10.5px; color: var(--text-subtle); display: block; }
+    .bit-name { font-family: var(--mono); font-weight: 700; font-size: 13px; display: block; margin: 2px 0; }
+    .bit-val { font-family: var(--mono); font-size: 11px; }
+
+    /* 2. Memory Stack */
+    .mem-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .mem-block {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      background: var(--surface);
+      transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .mem-block:hover { border-color: var(--border-strong); transform: translateX(3px); }
+    }
+    .mem-block.selected { border-color: var(--kernel); box-shadow: 0 0 0 2px rgba(59, 91, 219, 0.14); }
+    .mem-block.trampoline { border-left: 4px solid var(--kernel); }
+    .mem-block.trapframe { border-left: 4px solid var(--hw); }
+    .mem-block.usyscall { border-left: 4px solid var(--user); background: #f8fffc; }
+    .mem-block.user-region { border-left: 4px solid #94a3b8; }
+
+    .mem-name { font-family: var(--mono); font-weight: 600; font-size: 13.5px; }
+    .mem-addr { font-family: var(--mono); font-size: 12px; color: var(--text-subtle); }
+
+    /* 3. Workflow Steps (Vertical) */
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-item {
+      padding: 11px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 13.5px;
+      opacity: 0.42;
+      transform: translateY(4px);
+      transition: opacity var(--duration-ui) var(--ease-out), transform var(--duration-ui) var(--ease-out), border-color var(--duration-ui) var(--ease-out), background-color var(--duration-ui) var(--ease-out);
+    }
+
+    .step-item.active {
+      opacity: 1;
+      transform: translateY(0);
+      border-color: var(--kernel);
+      background: #ffffff;
+    }
+
+    .step-item.active.fast {
+      border-color: var(--user);
+      background: #f8fffc;
+    }
+
+    .step-tag {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-subtle);
+      margin-bottom: 2px;
+    }
+
+    /* 4. vmprint Console */
+    .tree-console {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      padding: 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      line-height: 1.75;
+    }
+
+    .tree-line {
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: pre;
+      transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+    }
+
+    .tree-line:hover { background: rgba(255, 255, 255, 0.08); }
+    .tree-line.ancestor { background: rgba(59, 91, 219, 0.2); }
+    .tree-line.selected { background: rgba(59, 91, 219, 0.52); color: #ffffff; }
+    .tree-line.leaf { color: #6ee7b7; }
+    .tree-line.internal { color: #93c5fd; }
+
+    /* 5. pgaccess Grid */
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    @media (max-width: 640px) {
+      .page-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .page-box {
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 10px 4px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--surface);
+      user-select: none;
+      transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform 120ms var(--ease-out);
+    }
+
+    .page-box:active { transform: scale(0.97); }
+    .page-box:hover { border-color: var(--hw); }
+    .page-box.accessed { background: var(--hw-bg); border-color: var(--hw); }
+    .page-box.scanning {
+      border-color: var(--kernel);
+      box-shadow: 0 0 0 2px rgba(59, 91, 219, 0.28);
+      transform: translateY(-2px);
+    }
+    .page-idx { font-family: var(--mono); font-size: 11px; color: var(--text-subtle); }
+    .page-pte-a { font-family: var(--mono); font-size: 12px; font-weight: 700; margin-top: 4px; }
+    .page-box.accessed .page-pte-a { color: var(--hw); }
+
+    .stat-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .stat-val { font-family: var(--mono); font-weight: 700; }
+
+    /* Tables & Pitfalls */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-subtle);
+      background: var(--surface-alt);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .pitfall-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pitfall {
+      border: 1px solid var(--danger-border);
+      background: var(--danger-bg);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+    }
+
+    .pitfall strong {
+      color: var(--danger);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    /* Requirements Quote & Analysis */
+    .quote-block {
+      margin: 10px 0 14px;
+      padding: 12px 14px;
+      background: var(--surface-alt);
+      border-left: 3px solid var(--kernel);
+      border-radius: 0 6px 6px 0;
+      font-size: 13.5px;
+      color: var(--text);
+    }
+
+    .quote-source {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--kernel);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .quote-block ul {
+      margin: 6px 0 0;
+      padding-left: 18px;
+    }
+
+    .req-analysis {
+      padding: 12px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--user-border);
+      background: var(--user-bg);
+      font-size: 13.5px;
+    }
+
+    .req-analysis strong {
+      color: var(--user);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      button:active, .bit-cell:active, .page-box:active, .page-box.scanning, .mem-block:hover {
+        transform: none;
+      }
+      .step-item {
+        transform: none;
+        transition: opacity var(--duration-ui) ease;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="hero">
+      <div class="hero-tag">xv6-riscv &bull; Project 3: Page Table</div>
+      <h1>Lộ trình hiểu bản chất &amp; tự code Lab 3</h1>
+      <p>
+        Trình bày theo thứ tự từ trên xuống: <strong>Lý thuyết Sv39</strong> &rarr;
+        <strong>Kiến trúc xv6</strong> &rarr; <strong>Workflow 3 bài tập</strong> &rarr;
+        <strong>File &amp; Output</strong> &rarr; <strong>Lưu ý khi code</strong>.
+      </p>
+      <nav class="toc">
+        <a href="#requirements">0. Yêu cầu đề</a>
+        <a href="#theory">1. Lý thuyết Sv39</a>
+        <a href="#xv6-arch">2. Kiến trúc xv6</a>
+        <a href="#workflows">3. Tương tác &amp; Workflow</a>
+        <a href="#files-output">4. Files &amp; Output</a>
+        <a href="#pitfalls">5. Lưu ý khi code</a>
+      </nav>
+    </header>
+
+    <!-- 0. PHÂN TÍCH YÊU CẦU ĐỀ & TRÍCH DẪN -->
+    <section id="requirements">
+      <div class="step-kicker">Bước 0 &bull; Đọc đề &amp; Phân tích yêu cầu</div>
+      <h2>Yêu cầu đề bài &amp; Trích dẫn trực tiếp từ 2 file PDF</h2>
+      <p class="lead">
+        Tổng hợp nguyên văn các yêu cầu cốt lõi từ <code>Lab3_OS_PageTable.pdf</code> và hướng dẫn triển khai từ <code>Hướng dẫn project 3 - PageTable.pdf</code>. Chọn từng mục để xem trích dẫn và phân tích.
+      </p>
+
+      <div class="card">
+        <div class="btn-row" id="reqTabs">
+          <button class="active" data-req="rules">Quy tắc &amp; Nộp bài</button>
+          <button data-req="p1">4.1 Tăng tốc syscall (ugetpid)</button>
+          <button data-req="p2">4.2 In bảng trang (vmprint)</button>
+          <button data-req="p3">4.3 Phát hiện truy cập (pgaccess)</button>
+        </div>
+        <div id="reqContent"></div>
+      </div>
+    </section>
+
+    <!-- 1. LÝ THUYẾT -->
+    <section id="theory">
+      <div class="step-kicker">Bước 1 &bull; Lý thuyết nền tảng</div>
+      <h2>Cơ chế phân trang RISC-V Sv39 &amp; Cờ PTE</h2>
+      <p class="lead">
+        RISC-V Sv39 dùng 39 bit thấp của địa chỉ ảo để đi qua cây bảng trang 3 cấp (L2 &rarr; L1 &rarr; L0), mỗi bảng chứa 512 PTE (64-bit).
+      </p>
+
+      <div class="card">
+        <h3 style="margin-top:0;">Cấu trúc địa chỉ ảo 64-bit (Sv39)</h3>
+        <div class="va-bar">
+          <div class="va-seg"><strong>39..63</strong>Phải = 0</div>
+          <div class="va-seg"><strong>30..38</strong>L2 (9 bit)</div>
+          <div class="va-seg"><strong>21..29</strong>L1 (9 bit)</div>
+          <div class="va-seg"><strong>12..20</strong>L0 (9 bit)</div>
+          <div class="va-seg"><strong>0..11</strong>Offset (12 bit)</div>
+        </div>
+
+        <h3>Thử bật/tắt các bit cờ của 1 PTE (<code>kernel/riscv.h</code>)</h3>
+        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 10px;">
+          Nhấn vào từng bit để xem phần cứng RISC-V và hàm <code>vmprint()</code> / <code>freewalk()</code> hiểu PTE này như thế nào:
+        </p>
+
+        <div class="pte-bits" id="pteBits">
+          <div class="bit-cell on" data-bit="0"><span class="bit-num">Bit 0</span><span class="bit-name">PTE_V</span><span class="bit-val">1</span></div>
+          <div class="bit-cell on" data-bit="1"><span class="bit-num">Bit 1</span><span class="bit-name">PTE_R</span><span class="bit-val">1</span></div>
+          <div class="bit-cell" data-bit="2"><span class="bit-num">Bit 2</span><span class="bit-name">PTE_W</span><span class="bit-val">0</span></div>
+          <div class="bit-cell" data-bit="3"><span class="bit-num">Bit 3</span><span class="bit-name">PTE_X</span><span class="bit-val">0</span></div>
+          <div class="bit-cell on" data-bit="4"><span class="bit-num">Bit 4</span><span class="bit-name">PTE_U</span><span class="bit-val">1</span></div>
+          <div class="bit-cell" data-bit="6"><span class="bit-num">Bit 6</span><span class="bit-name">PTE_A</span><span class="bit-val">0</span></div>
+          <div class="bit-cell" data-bit="7"><span class="bit-num">Bit 7</span><span class="bit-name">PTE_D</span><span class="bit-val">0</span></div>
+        </div>
+
+        <div class="detail-box" id="pteInterpret"></div>
+      </div>
+    </section>
+
+    <!-- 2. KIẾN TRÚC XV6 -->
+    <section id="xv6-arch">
+      <div class="step-kicker">Bước 2 &bull; Kiến trúc bộ nhớ xv6</div>
+      <h2>Không gian địa chỉ ảo của 1 tiến trình User (<code>memlayout.h</code>)</h2>
+      <p class="lead">
+        Mỗi tiến trình có bảng trang riêng <code>p-&gt;pagetable</code>. Trang <code>USYSCALL</code> được chèn ngay bên dưới <code>TRAPFRAME</code>. Nhấn vào từng vùng để xem chi tiết.
+      </p>
+
+      <div class="card">
+        <div class="mem-stack" id="memStack">
+          <div class="mem-block trampoline" data-region="trampoline">
+            <span class="mem-name">TRAMPOLINE</span>
+            <span class="mem-addr">MAXVA - PGSIZE</span>
+          </div>
+          <div class="mem-block trapframe" data-region="trapframe">
+            <span class="mem-name">TRAPFRAME</span>
+            <span class="mem-addr">TRAMPOLINE - PGSIZE</span>
+          </div>
+          <div class="mem-block usyscall selected" data-region="usyscall">
+            <span class="mem-name">USYSCALL (Mới — Lab 3)</span>
+            <span class="mem-addr">TRAPFRAME - PGSIZE</span>
+          </div>
+          <div class="mem-block user-region" data-region="stack">
+            <span class="mem-name">User Stack + Guard Page + Heap</span>
+            <span class="mem-addr">... &rarr; p-&gt;sz</span>
+          </div>
+          <div class="mem-block user-region" data-region="text">
+            <span class="mem-name">Text + Data / BSS</span>
+            <span class="mem-addr">0x00000000</span>
+          </div>
+        </div>
+
+        <div class="detail-box" id="memDetail"></div>
+      </div>
+    </section>
+
+    <!-- 3. WORKFLOWS -->
+    <section id="workflows">
+      <div class="step-kicker">Bước 3 &bull; Tương tác &amp; Visualize quá trình</div>
+      <h2>Cách hoạt động của 3 nhiệm vụ trong Lab 3</h2>
+      <p class="lead">Đi lần lượt qua từng nhiệm vụ để thấy rõ kernel, user và phần cứng phối hợp với nhau như thế nào.</p>
+
+      <!-- 3.1 USYSCALL -->
+      <div class="card">
+        <h3 style="margin-top:0;">3.1. Tăng tốc <code>getpid()</code> bằng trang chia sẻ <code>USYSCALL</code></h3>
+        <div class="btn-row">
+          <div id="usysMode" style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="active" data-mode="runtime">So sánh lúc chạy (getpid vs ugetpid)</button>
+            <button data-mode="lifecycle">Vòng đời cấp phát &amp; hủy (proc.c)</button>
+          </div>
+          <div style="margin-left:auto; display:flex; gap:6px;">
+            <button id="usysPrev">&larr; Lùi</button>
+            <button class="primary" id="usysNext">Bước tiếp &rarr;</button>
+          </div>
+        </div>
+        <div id="usysContainer"></div>
+      </div>
+
+      <!-- 3.2 vmprint -->
+      <div class="card">
+        <h3 style="margin-top:0;">3.2. Duyệt &amp; in cây bảng trang với <code>vmprint()</code></h3>
+        <p style="font-size:13.5px; color:var(--text-muted); margin-top:0;">
+          Nhấn vào từng dòng trong output mẫu của tiến trình <code>init</code> (<code>pid == 1</code>) để xem cấp bảng trang, điều kiện đệ quy và ý nghĩa của từng trang lá.
+        </p>
+        <div class="tree-console" id="treeConsole"></div>
+        <div class="detail-box" id="treeDetail"></div>
+      </div>
+
+      <!-- 3.3 pgaccess -->
+      <div class="card">
+        <h3 style="margin-top:0;">3.3. Theo dõi trang đã truy cập với <code>pgaccess()</code> &amp; bit <code>PTE_A</code></h3>
+        <p style="font-size:13.5px; color:var(--text-muted); margin-top:0;">
+          1) Nhấn vào các trang bên dưới để giả lập User đọc/ghi (phần cứng bật <code>PTE_A = 1</code>).
+          2) Bấm <strong>Chạy sys_pgaccess()</strong> để xem kernel dùng <code>walk()</code> gom bitmask và xóa <code>PTE_A</code> về <code>0</code>.
+        </p>
+        <div class="btn-row">
+          <button id="pgReset">Reset PTE_A = 0</button>
+          <button class="primary" id="pgRun">Chạy sys_pgaccess(base, 8, &amp;mask)</button>
+        </div>
+        <div class="page-grid" id="pageGrid"></div>
+        <div class="stat-row">
+          <div class="stat-item"><span>Bitmask trả về User (Binary — bit 0 là Page 0)</span><span class="stat-val" id="maskBin">0b00000000</span></div>
+          <div class="stat-item"><span>Bitmask trả về User (Hex)</span><span class="stat-val" id="maskHex">0x00</span></div>
+          <div class="stat-item"><span>Trạng thái</span><span class="stat-val" id="pgAction" style="font-weight:500; font-family:var(--sans);">Chờ thao tác truy cập trang</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. FILES & OUTPUT -->
+    <section id="files-output">
+      <div class="step-kicker">Bước 4 &bull; Kiến trúc file &amp; Kết quả</div>
+      <h2>Các file cần chỉnh sửa &amp; Output cần đạt</h2>
+      <p class="lead">Bản đồ chính xác các file/hàm trong xv6 bạn sẽ viết tay và các đầu ra dùng để kiểm tra &amp; nộp bài.</p>
+
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Nhiệm vụ</th>
+              <th>File</th>
+              <th>Thành phần cần sửa / thêm</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge user">ugetpid</span></td>
+              <td><code>kernel/memlayout.h</code></td>
+              <td>Định nghĩa <code>USYSCALL (TRAPFRAME - PGSIZE)</code> và <code>struct usyscall { int pid; };</code>.</td>
+            </tr>
+            <tr>
+              <td><span class="badge user">ugetpid</span></td>
+              <td><code>kernel/proc.h</code>, <code>kernel/proc.c</code></td>
+              <td>Thêm <code>struct usyscall *usyscall</code> vào <code>struct proc</code>; xử lý trong <code>allocproc</code>, <code>proc_pagetable</code>, <code>freeproc</code>, <code>proc_freepagetable</code>.</td>
+            </tr>
+            <tr>
+              <td><span class="badge kernel">vmprint</span></td>
+              <td><code>kernel/vm.c</code>, <code>kernel/defs.h</code>, <code>kernel/exec.c</code></td>
+              <td>Viết <code>vmprint(pagetable_t)</code>; khai báo trong <code>defs.h</code>; gọi khi <code>p-&gt;pid == 1</code> trước <code>return argc;</code> trong <code>exec.c</code>.</td>
+            </tr>
+            <tr>
+              <td><span class="badge hw">pgaccess</span></td>
+              <td><code>kernel/riscv.h</code></td>
+              <td>Thêm <code>#define PTE_A (1L &lt;&lt; 6)</code>.</td>
+            </tr>
+            <tr>
+              <td><span class="badge hw">pgaccess</span></td>
+              <td><code>kernel/sysproc.c</code>, <code>syscall.h/c</code>, <code>user/user.h</code>, <code>usys.pl</code></td>
+              <td>Đăng ký <code>SYS_pgaccess</code> và viết <code>sys_pgaccess()</code> dùng <code>walk()</code> + <code>copyout()</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0;">Output cần kiểm tra &amp; File nộp bài</h3>
+        <ul style="margin:0; padding-left:20px; font-size:14px; color:var(--text-muted);">
+          <li><code>make qemu</code>: In ra cây bảng trang của tiến trình <code>init</code> đúng định dạng <code>..</code>, chỉ số PTE, <code>pte</code>, <code>pa</code>.</li>
+          <li><code>pgtbltest</code> &amp; <code>make grade</code>: Pass các bài test <code>ugetpid</code>, <code>pgaccess</code>, và kiểm tra in bảng trang.</li>
+          <li><code>answers-*.txt</code>: Trả lời câu hỏi lý thuyết (những syscall nào khác có thể dùng trang chia sẻ <code>USYSCALL</code>).</li>
+          <li>File nộp Moodle: Báo cáo PDF (giải thích giải pháp &amp; các trang lá của <code>vmprint</code>), file <code>.patch</code> (<code>git diff</code>), và source đã <code>make clean</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 5. LƯU Ý -->
+    <section id="pitfalls">
+      <div class="step-kicker">Bước 5 &bull; Kinh nghiệm gỡ lỗi</div>
+      <h2>Các lưu ý quan trọng khi tự code</h2>
+      <p class="lead">4 lỗi phổ biến nhất khiến bài Lab 3 bị panic hoặc fail test.</p>
+
+      <div class="pitfall-stack">
+        <div class="pitfall">
+          <strong>1. Panic "freewalk: leaf" khi hủy tiến trình</strong>
+          <code>freewalk()</code> sẽ panic nếu còn trang lá chưa unmap. Trong <code>proc_freepagetable()</code>, phải gọi <code>uvmunmap(pagetable, USYSCALL, 1, 0)</code> trước khi gọi <code>uvmfree()</code>. Tương tự, nếu <code>mappages(USYSCALL)</code> thất bại trong <code>proc_pagetable()</code>, nhớ unmap <code>TRAMPOLINE</code> và <code>TRAPFRAME</code> trước khi trả về <code>0</code>.
+        </div>
+        <div class="pitfall">
+          <strong>2. Đặt nhầm cờ PTE_W cho USYSCALL</strong>
+          Trang chia sẻ phải là <strong>user read-only</strong> (<code>PTE_R | PTE_U</code>). Nếu bật <code>PTE_W</code>, tiến trình user có thể tự ghi đè <code>pid</code> của chính mình.
+        </div>
+        <div class="pitfall">
+          <strong>3. Quên kiểm tra NULL từ walk() trong sys_pgaccess()</strong>
+          <code>walk(p-&gt;pagetable, va, 0)</code> trả về <code>0</code> nếu trang chưa từng được map. Luôn kiểm tra <code>pte != 0 &amp;&amp; (*pte &amp; PTE_V)</code> trước khi đọc <code>*pte</code>.
+        </div>
+        <div class="pitfall">
+          <strong>4. Quên xóa bit PTE_A hoặc không giới hạn số trang quét</strong>
+          Sau khi ghi nhận trang đã truy cập vào bitmask, phải xóa <code>*pte &amp;= ~PTE_A</code> để lần gọi sau đo lại chính xác. Đồng thời kiểm tra giới hạn <code>len</code> (VD: <code>&lt; 0</code> hoặc <code>&gt; 32/64</code>) và đảm bảo kích thước <code>copyout()</code> khớp với kiểu biến bitmask bên user.
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    function animateSwap(el) {
+      if (!el || !el.animate || reducedMotion.matches) return;
+      el.animate(
+        [
+          { opacity: 0.45, transform: "translateY(3px)" },
+          { opacity: 1, transform: "translateY(0)" }
+        ],
+        { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)" }
+      );
+    }
+
+    // 0. Requirements & Direct Quotes
+    const reqData = {
+      rules: {
+        quotes: [
+          {
+            src: "Lab3_OS_PageTable.pdf — Mục 1 & 2 (Quy tắc & Nộp bài)",
+            html: `
+              <ul>
+                <li>"Project được thực hiện theo nhóm: mỗi nhóm có tối đa <strong>3 sinh viên</strong>. Tất cả các bài tập giống nhau sẽ được chấm 0 điểm trong toàn bộ quá trình thực hành."</li>
+                <li>"Nộp bài tập trực tiếp trên trang web của khóa học (MOODLE)... Tên tệp: <code>StudentID1_StudentID2_StudentID3.zip</code>"</li>
+                <li>"<code>Report.pdf</code>: Báo cáo nên ngắn gọn và súc tích. <strong>Không cố gắng đưa mã nguồn vào báo cáo.</strong> Mục đích của báo cáo là để bạn có cơ hội làm rõ giải pháp của mình, nêu ra những khó khăn gặp phải..."</li>
+                <li>"Realease: Tệp diff (Ví dụ: <code>git diff &gt; StudentID1_StudentID2_StudentID3.patch</code>)"</li>
+                <li>"Source: Tệp Zip của xv6 (phiên bản được <code>make clean</code>)"</li>
+              </ul>
+            `
+          },
+          {
+            src: "Lab3_OS_PageTable.pdf — Mục 4 (Lưu ý chung)",
+            html: `"Nếu bài lab này có câu hỏi, bạn hãy viết câu trả lời của mình trong file có tên <code>answers-*.txt</code>."`
+          }
+        ],
+        analysis: "Ngoài code C chạy pass test, bài nộp bắt buộc phải có đủ 3 thành phần đóng gói đúng tên (Report PDF không chép code, file .patch từ git diff, source đã make clean) kèm file answers-*.txt."
+      },
+      p1: {
+        quotes: [
+          {
+            src: "Lab3_OS_PageTable.pdf — Mục 4.1 (Tăng tốc system call)",
+            html: `
+              <ul>
+                <li>"Khi một tiến trình được tạo, ánh xạ một trang chỉ đọc tại địa chỉ ảo <code>USYSCALL</code> (một địa chỉ ảo được định nghĩa trong <code>memlayout.h</code>)."</li>
+                <li>"Ở đầu trang này, lưu trữ một cấu trúc <code>struct usyscall</code> (cũng được định nghĩa trong <code>memlayout.h</code>) và khởi tạo nó để lưu trữ PID (Process ID) của tiến trình hiện tại."</li>
+                <li>"Bạn sẽ nhận được điểm tối đa cho phần này của bài lab nếu bài kiểm tra <code>ugetpid</code> vượt qua khi chạy <code>pgtbltest</code>."</li>
+                <li>"<strong>Câu hỏi thêm:</strong> Những lệnh gọi hệ thống nào khác trong xv6 có thể được tăng tốc bằng cách sử dụng trang chia sẻ này? Hãy giải thích."</li>
+              </ul>
+            `
+          },
+          {
+            src: "Hướng dẫn project 3 - PageTable.pdf — Mục 1 (B1–B8)",
+            html: `
+              <ul>
+                <li>"B1. Đặt <code>USYSCALL</code> nằm thấp hơn <code>TRAPFRAME</code> đúng 1 trang (<code>1 * PGSIZE</code>)."</li>
+                <li>"B3–B4. Thêm con trỏ <code>struct usyscall *</code> vào <code>struct proc</code>; trong <code>allocproc()</code> cấp phát bằng <code>kalloc</code>, ghi PID vào trường <code>pid</code>."</li>
+                <li>"B5–B6. Trong <code>proc_pagetable()</code> map quyền user chỉ được đọc; trong <code>freeproc</code> giải phóng trang và trong <code>proc_freepagetable</code> bỏ map vùng <code>USYSCALL</code>."</li>
+              </ul>
+            `
+          }
+        ],
+        analysis: "Bản chất: Tạo 1 trang vật lý riêng cho mỗi process, gắn vào bảng trang user ngay dưới TRAPFRAME với quyền PTE_R | PTE_U (không có PTE_W) để user đọc PID trực tiếp không cần trap. Nhớ trả lời câu hỏi thêm vào file answers-*.txt."
+      },
+      p2: {
+        quotes: [
+          {
+            src: "Lab3_OS_PageTable.pdf — Mục 4.2 (In bảng trang)",
+            html: `
+              <ul>
+                <li>"Định nghĩa hàm <code>vmprint()</code>: Hàm này nhận vào một tham số kiểu <code>pagetable_t</code> và in bảng trang đó theo định dạng mô tả."</li>
+                <li>"Chèn lệnh <code>if (p-&gt;pid == 1) vmprint(p-&gt;pagetable)</code> ngay trước câu lệnh <code>return argc</code> trong <code>exec.c</code> để in bảng trang của tiến trình đầu tiên."</li>
+                <li>"Dấu <code>..</code> thể hiện độ sâu của mục PTE trong cấu trúc cây bảng trang. PTE không hợp lệ sẽ không được in ra."</li>
+                <li>"<strong>Giải thích chi tiết các trang lá:</strong> Với mỗi trang lá trong đầu ra, bạn cần giải thích những gì nó chứa về mặt logic và các bit quyền của nó."</li>
+              </ul>
+            `
+          },
+          {
+            src: "Hướng dẫn project 3 - PageTable.pdf — Mục 2 (B1–B5)",
+            html: `
+              <ul>
+                <li>"B1–B2. Đọc <code>freewalk()</code> trong <code>kernel/vm.c</code>... Duyệt 512 PTE; nếu PTE là bảng con &rarr; đệ quy xuống cấp dưới, tăng độ sâu; nếu PTE là leaf &rarr; chỉ in, không đệ quy tiếp."</li>
+                <li>"B3–B5. Khai báo prototype trong <code>kernel/defs.h</code>... chạy <code>make qemu</code> và <code>make grade</code> để kiểm tra."</li>
+              </ul>
+            `
+          }
+        ],
+        analysis: "Bản chất: Duyệt DFS cây bảng trang 3 cấp Sv39 tương tự freewalk(), dùng %p để in chuẩn 64-bit hex cho bài test make grade. Phần giải thích từng trang lá (Text, Data, Guard, Stack, USYSCALL, TRAPFRAME, TRAMPOLINE) cần đưa vào Report.pdf."
+      },
+      p3: {
+        quotes: [
+          {
+            src: "Lab3_OS_PageTable.pdf — Mục 4.3 (Phát hiện các trang đã được truy cập)",
+            html: `
+              <ul>
+                <li>"Hàm <code>pgaccess()</code> nhận ba tham số: (1) Địa chỉ ảo bắt đầu của trang người dùng đầu tiên cần kiểm tra; (2) Số lượng trang cần kiểm tra; (3) Địa chỉ người dùng trỏ tới một bộ đệm để lưu trữ kết quả vào một bitmask (trang đầu tiên tương ứng với bit ít quan trọng nhất)."</li>
+                <li>"Định nghĩa <code>PTE_A</code> (bit truy cập) trong <code>kernel/riscv.h</code>."</li>
+                <li>"Nếu bit <code>PTE_A</code> được đặt, bạn cần xóa nó để đảm bảo rằng chỉ các trang đã được truy cập kể từ lần cuối gọi <code>pgaccess()</code> mới được đánh dấu."</li>
+              </ul>
+            `
+          },
+          {
+            src: "Hướng dẫn project 3 - PageTable.pdf — Mục 3 (B3–B7)",
+            html: `
+              <ul>
+                <li>"B3. Định nghĩa cờ biểu diễn trang đã được truy cập (giá trị <code>64</code>, bit thứ 6)."</li>
+                <li>"B4–B6. Thêm <code>SYS_pgaccess</code> (<code>syscall.h</code>, <code>syscall.c</code>, <code>defs.h</code>, <code>user.h</code>, <code>usys.S</code>); cài đặt <code>sys_pgaccess()</code> trong <code>sysproc.c</code> dùng <code>argaddr</code>/<code>argint</code>, <code>walk()</code> và <code>copyout()</code>."</li>
+              </ul>
+            `
+          }
+        ],
+        analysis: "Bản chất: Tận dụng phần cứng RISC-V tự bật PTE_A (1L << 6) khi có TLB miss. Kernel dùng walk(p->pagetable, va, 0) tìm từng PTE, gom vào bitmask, xóa PTE_A ngay sau khi đọc, rồi copyout() kết quả ra user space."
+      }
+    };
+
+    const reqContent = document.getElementById("reqContent");
+    function renderReq(key) {
+      const item = reqData[key];
+      reqContent.innerHTML = `
+        ${item.quotes.map(q => `
+          <div class="quote-block">
+            <span class="quote-source">${q.src}</span>
+            <div>${q.html}</div>
+          </div>
+        `).join("")}
+        <div class="req-analysis">
+          <strong>Phân tích bản chất yêu cầu</strong>
+          <div>${item.analysis}</div>
+        </div>
+      `;
+      animateSwap(reqContent);
+    }
+
+    document.getElementById("reqTabs").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#reqTabs button").forEach(b => b.classList.toggle("active", b === btn));
+      renderReq(btn.dataset.req);
+    });
+    renderReq("rules");
+
+    // 1. PTE Bit Explorer
+    const pteState = { 0: 1, 1: 1, 2: 0, 3: 0, 4: 1, 6: 0, 7: 0 };
+    const pteInterpret = document.getElementById("pteInterpret");
+
+    function updatePTE() {
+      const v = pteState[0], r = pteState[1], w = pteState[2], x = pteState[3], u = pteState[4], a = pteState[6], d = pteState[7];
+      const val = (v<<0)|(r<<1)|(w<<2)|(x<<3)|(u<<4)|(a<<6)|(d<<7);
+      let status = "", note = "";
+
+      if (!v) {
+        status = "PTE Không hợp lệ (Invalid)";
+        note = "Bit PTE_V = 0. Truy cập sẽ gây Page Fault. vmprint() và freewalk() bỏ qua mục này.";
+      } else if (!r && !w && !x) {
+        status = "Nút trung gian (Trỏ tới bảng trang cấp dưới)";
+        note = "PTE_V = 1 và R=W=X=0. vmprint() in dòng này rồi đệ quy xuống cấp dưới.";
+      } else if (!r && w) {
+        status = "Không hợp lệ trên RISC-V (W=1, R=0)";
+        note = "Đặc tả Sv39 cấm bật PTE_W mà không bật PTE_R.";
+      } else {
+        status = "Trang lá (Leaf Page)";
+        const perms = [r ? "Read" : "", w ? "Write" : "", x ? "Exec" : ""].filter(Boolean).join(" + ");
+        const mode = u ? "User & Kernel" : "Chỉ Kernel";
+        note = `Quyền: ${perms} | Phạm vi: ${mode}. ` +
+               (a ? "PTE_A = 1 (Trang vừa được truy cập)." : "PTE_A = 0 (Chưa bị đụng tới).");
+      }
+
+      document.querySelectorAll("#pteBits .bit-cell").forEach(cell => {
+        const b = Number(cell.dataset.bit);
+        const on = pteState[b] === 1;
+        cell.classList.toggle("on", on);
+        cell.classList.toggle("warn", on && b === 2);
+        cell.classList.toggle("hw", on && b === 6);
+        cell.querySelector(".bit-val").textContent = on ? "1" : "0";
+      });
+
+      pteInterpret.innerHTML = `
+        <h4>${status} <span style="font-weight:400; color:var(--text-subtle);">| Flags: 0x${val.toString(16).padStart(2, "0")}</span></h4>
+        <div>${note}</div>
+      `;
+      animateSwap(pteInterpret);
+    }
+
+    document.getElementById("pteBits").addEventListener("click", e => {
+      const cell = e.target.closest(".bit-cell");
+      if (!cell) return;
+      const b = Number(cell.dataset.bit);
+      pteState[b] = pteState[b] ? 0 : 1;
+      updatePTE();
+    });
+    updatePTE();
+
+    // 2. Memory Layout
+    const regions = {
+      trampoline: {
+        title: "TRAMPOLINE (MAXVA - PGSIZE)",
+        badges: ["PTE_R", "PTE_X", "Kernel Only"],
+        desc: "Chứa mã trampoline.S chuyển đổi ngữ cảnh khi trap/syscall. Không bật PTE_U."
+      },
+      trapframe: {
+        title: "TRAPFRAME (TRAMPOLINE - PGSIZE)",
+        badges: ["PTE_R", "PTE_W", "Kernel Only"],
+        desc: "Trang p->trapframe lưu 32 thanh ghi user khi nhảy vào kernel. Không bật PTE_U."
+      },
+      usyscall: {
+        title: "USYSCALL (TRAPFRAME - PGSIZE)",
+        badges: ["PTE_R", "PTE_U", "User Read-Only"],
+        desc: "Trang chia sẻ chứa struct usyscall (pid). Cấp phát ở allocproc(), map ở proc_pagetable() với PTE_R | PTE_U để user đọc trực tiếp."
+      },
+      stack: {
+        title: "User Stack + Guard Page + Heap",
+        badges: ["PTE_R", "PTE_W", "PTE_U"],
+        desc: "Vùng stack (có guard page không có PTE_U ngay dưới) và vùng heap mở rộng qua sbrk()."
+      },
+      text: {
+        title: "Text + Data / BSS (0x0)",
+        badges: ["PTE_R", "PTE_X (Text)", "PTE_W (Data)", "PTE_U"],
+        desc: "Mã máy và dữ liệu tĩnh của chương trình user được nạp bởi exec()."
+      }
+    };
+
+    const memDetail = document.getElementById("memDetail");
+    function renderRegion(key) {
+      const r = regions[key];
+      document.querySelectorAll(".mem-block").forEach(el => {
+        el.classList.toggle("selected", el.dataset.region === key);
+      });
+      memDetail.innerHTML = `
+        <h4>${r.title}</h4>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+          ${r.badges.map(b => `<span class="badge">${b}</span>`).join("")}
+        </div>
+        <div>${r.desc}</div>
+      `;
+      animateSwap(memDetail);
+    }
+    document.getElementById("memStack").addEventListener("click", e => {
+      const block = e.target.closest(".mem-block");
+      if (block) renderRegion(block.dataset.region);
+    });
+    renderRegion("usyscall");
+
+    // 3.1 USYSCALL Workflow
+    const usysData = {
+      runtime: [
+        { tag: "Bước 1 — User gọi hàm", text: "getpid() thực hiện lệnh ecall (bẫy vào kernel). Ngược lại, ugetpid() chỉ lấy con trỏ (struct usyscall *)USYSCALL.", fast: false },
+        { tag: "Bước 2 — Chuyển ngữ cảnh / Dịch địa chỉ", text: "getpid() chạy qua trampoline.S lưu thanh ghi vào TRAPFRAME và đổi satp. ugetpid() đi thẳng qua MMU bằng bảng trang user (PTE_R | PTE_U).", fast: true },
+        { tag: "Bước 3 — Đọc PID", text: "getpid() chạy sys_getpid() trong kernel để đọc myproc()->pid. ugetpid() đọc trực tiếp u->pid từ bộ nhớ ở user mode.", fast: true },
+        { tag: "Bước 4 — Trả kết quả", text: "getpid() phải phục hồi thanh ghi và sret về user. ugetpid() trả về ngay sau 1 lệnh load.", fast: true }
+      ],
+      lifecycle: [
+        { tag: "1. allocproc() [kernel/proc.c]", text: "Gọi kalloc() cấp 1 trang cho p->usyscall, memset về 0 rồi gán p->usyscall->pid = p->pid.", fast: false },
+        { tag: "2. proc_pagetable() [kernel/proc.c]", text: "Gọi mappages(pagetable, USYSCALL, PGSIZE, (uint64)p->usyscall, PTE_R | PTE_U). Nếu fail phải unmap TRAMPOLINE & TRAPFRAME.", fast: true },
+        { tag: "3. proc_freepagetable() [kernel/proc.c]", text: "Gọi uvmunmap(pagetable, USYSCALL, 1, 0) trước khi gọi uvmfree() để tránh panic freewalk: leaf.", fast: false },
+        { tag: "4. freeproc() [kernel/proc.c]", text: "Nếu p->usyscall != 0 thì gọi kfree((void*)p->usyscall) và gán p->usyscall = 0.", fast: false }
+      ]
+    };
+
+    let usysMode = "runtime", usysStep = 0;
+    function buildUsysSteps() {
+      const steps = usysData[usysMode];
+      document.getElementById("usysContainer").innerHTML = `
+        <div class="step-list">
+          ${steps.map((s, i) => `
+            <div class="step-item ${i <= usysStep ? "active" : ""} ${s.fast ? "fast" : ""}">
+              <div class="step-tag">${s.tag}</div>
+              <div>${s.text}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+    function updateUsysActive() {
+      document.querySelectorAll("#usysContainer .step-item").forEach((el, i) => {
+        el.classList.toggle("active", i <= usysStep);
+      });
+    }
+    document.getElementById("usysMode").addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      usysMode = btn.dataset.mode;
+      usysStep = 0;
+      document.querySelectorAll("#usysMode button").forEach(b => b.classList.toggle("active", b === btn));
+      buildUsysSteps();
+    });
+    document.getElementById("usysNext").addEventListener("click", () => { usysStep = (usysStep + 1) % 4; updateUsysActive(); });
+    document.getElementById("usysPrev").addEventListener("click", () => { usysStep = (usysStep + 3) % 4; updateUsysActive(); });
+    buildUsysSteps();
+
+    // 3.2 vmprint Tree
+    const treeData = [
+      { parent: -1, text: "page table 0x0000000087f6b000", type: "root", level: "Root (L2)", role: "Địa chỉ bảng trang gốc của tiến trình init.", perms: "In ngay ở dòng đầu của vmprint()." },
+      { parent: 0,  text: "..0: pte 0x0000000021fd9c01 pa 0x0000000087f67000", type: "internal", level: "Level 2 (index 0)", role: "Trỏ tới bảng trang mức 1 cho vùng địa chỉ thấp.", perms: "0x01 = PTE_V (R=W=X=0 -> đệ quy xuống)." },
+      { parent: 1,  text: ".. ..0: pte 0x0000000021fd9801 pa 0x0000000087f66000", type: "internal", level: "Level 1 (index 0)", role: "Trỏ tới bảng trang mức 0 cho các trang đầu của init.", perms: "0x01 = PTE_V (đệ quy xuống)." },
+      { parent: 2,  text: ".. .. ..0: pte 0x0000000021fda01b pa 0x0000000087f68000", type: "leaf", level: "Level 0 (index 0)", role: "Trang Text (mã thực thi của init).", perms: "0x1B = PTE_V | PTE_R | PTE_X | PTE_U." },
+      { parent: 2,  text: ".. .. ..1: pte 0x0000000021fd9417 pa 0x0000000087f65000", type: "leaf", level: "Level 0 (index 1)", role: "Trang Data / BSS của init.", perms: "0x17 = PTE_V | PTE_R | PTE_W | PTE_U." },
+      { parent: 2,  text: ".. .. ..2: pte 0x0000000021fd9007 pa 0x0000000087f64000", type: "leaf", level: "Level 0 (index 2)", role: "Stack Guard Page (bảo vệ tràn stack).", perms: "0x07 = PTE_V | PTE_R | PTE_W (không có PTE_U)." },
+      { parent: 2,  text: ".. .. ..3: pte 0x0000000021fd8c17 pa 0x0000000087f63000", type: "leaf", level: "Level 0 (index 3)", role: "User Stack của init.", perms: "0x17 = PTE_V | PTE_R | PTE_W | PTE_U." },
+      { parent: 0,  text: "..255: pte 0x0000000021fda801 pa 0x0000000087f6a000", type: "internal", level: "Level 2 (index 255)", role: "Trỏ tới bảng trang mức 1 ở vùng địa chỉ cao.", perms: "0x01 = PTE_V (đệ quy xuống)." },
+      { parent: 7,  text: ".. ..511: pte 0x0000000021fda401 pa 0x0000000087f69000", type: "internal", level: "Level 1 (index 511)", role: "Trỏ tới bảng trang mức 0 chứa USYSCALL, TRAPFRAME, TRAMPOLINE.", perms: "0x01 = PTE_V (đệ quy xuống)." },
+      { parent: 8,  text: ".. .. ..509: pte 0x0000000021fdcc13 pa 0x0000000087f73000", type: "leaf", level: "Level 0 (index 509)", role: "Trang USYSCALL (TRAPFRAME - PGSIZE).", perms: "0x13 = PTE_V | PTE_R | PTE_U (User Read-Only)." },
+      { parent: 8,  text: ".. .. ..510: pte 0x0000000021fdd007 pa 0x0000000087f74000", type: "leaf", level: "Level 0 (index 510)", role: "Trang TRAPFRAME (TRAMPOLINE - PGSIZE).", perms: "0x07 = PTE_V | PTE_R | PTE_W (Kernel Only)." },
+      { parent: 8,  text: ".. .. ..511: pte 0x0000000020001c0b pa 0x0000000080007000", type: "leaf", level: "Level 0 (index 511)", role: "Trang TRAMPOLINE (MAXVA - PGSIZE).", perms: "0x0B = PTE_V | PTE_R | PTE_X (Kernel Only)." }
+    ];
+
+    const treeConsole = document.getElementById("treeConsole");
+    const treeDetail = document.getElementById("treeDetail");
+
+    function getAncestors(idx) {
+      const set = new Set();
+      let cur = treeData[idx].parent;
+      while (cur >= 0) {
+        set.add(cur);
+        cur = treeData[cur].parent;
+      }
+      return set;
+    }
+
+    function renderTree(idx) {
+      const ancestors = getAncestors(idx);
+      treeConsole.innerHTML = treeData.map((r, i) => `
+        <div class="tree-line ${r.type} ${i === idx ? "selected" : ""} ${ancestors.has(i) ? "ancestor" : ""}" data-idx="${i}">${r.text}</div>
+      `).join("");
+      const item = treeData[idx];
+      treeDetail.innerHTML = `
+        <h4>${item.level}</h4>
+        <div style="margin-bottom:6px;"><span class="badge ${item.type === "leaf" ? "user" : "kernel"}">${item.type === "leaf" ? "Trang lá (Không đệ quy)" : "Bảng trang (Đệ quy)"}</span></div>
+        <div><strong>Vai trò:</strong> ${item.role}</div>
+        <div style="margin-top:4px;"><strong>Cờ PTE:</strong> ${item.perms}</div>
+      `;
+      animateSwap(treeDetail);
+    }
+    treeConsole.addEventListener("click", e => {
+      const line = e.target.closest(".tree-line");
+      if (line) renderTree(Number(line.dataset.idx));
+    });
+    renderTree(9);
+
+    // 3.3 pgaccess Simulator
+    const pages = [false, false, false, false, false, false, false, false];
+    const pageGrid = document.getElementById("pageGrid");
+    const maskBin = document.getElementById("maskBin");
+    const maskHex = document.getElementById("maskHex");
+    const pgAction = document.getElementById("pgAction");
+    let scanToken = 0;
+
+    function renderPages(scanIdx = -1) {
+      pageGrid.innerHTML = pages.map((acc, i) => `
+        <div class="page-box ${acc ? "accessed" : ""} ${i === scanIdx ? "scanning" : ""}" data-page="${i}">
+          <div class="page-idx">Page ${i}</div>
+          <div class="page-pte-a">PTE_A = ${acc ? 1 : 0}</div>
+        </div>
+      `).join("");
+    }
+    pageGrid.addEventListener("click", e => {
+      const box = e.target.closest(".page-box");
+      if (!box) return;
+      scanToken++;
+      const idx = Number(box.dataset.page);
+      pages[idx] = !pages[idx];
+      pgAction.textContent = `User truy cập Page ${idx} (phần cứng bật PTE_A = 1)`;
+      renderPages();
+    });
+    document.getElementById("pgReset").addEventListener("click", () => {
+      scanToken++;
+      pages.fill(false);
+      maskBin.textContent = "0b00000000";
+      maskHex.textContent = "0x00";
+      pgAction.textContent = "Đã reset toàn bộ PTE_A = 0";
+      renderPages();
+    });
+    document.getElementById("pgRun").addEventListener("click", () => {
+      const myToken = ++scanToken;
+      let mask = 0;
+      maskBin.textContent = "0b00000000";
+      maskHex.textContent = "0x00";
+
+      if (reducedMotion.matches) {
+        for (let i = 0; i < pages.length; i++) {
+          if (pages[i]) {
+            mask |= (1 << i);
+            pages[i] = false;
+          }
+        }
+        maskBin.textContent = "0b" + mask.toString(2).padStart(8, "0");
+        maskHex.textContent = "0x" + mask.toString(16).padStart(2, "0").toUpperCase();
+        pgAction.textContent = "Đã copyout() bitmask ra user và xóa các bit PTE_A về 0";
+        renderPages();
+        return;
+      }
+
+      let i = 0;
+      function stepScan() {
+        if (myToken !== scanToken) return;
+        if (i >= pages.length) {
+          renderPages(-1);
+          pgAction.textContent = "Đã copyout() bitmask ra user và xóa các bit PTE_A về 0";
+          return;
+        }
+        renderPages(i);
+        pgAction.textContent = `walk() đang kiểm tra Page ${i}...`;
+        if (pages[i]) {
+          mask |= (1 << i);
+          pages[i] = false;
+          maskBin.textContent = "0b" + mask.toString(2).padStart(8, "0");
+          maskHex.textContent = "0x" + mask.toString(16).padStart(2, "0").toUpperCase();
+        }
+        i++;
+        setTimeout(stepScan, 65);
+      }
+      stepScan();
+    });
+    renderPages();
+  </script>
+</body>
+</html>
