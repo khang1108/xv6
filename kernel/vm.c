@@ -277,6 +277,12 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 static void
 vmprintwalk(pagetable_t pagetable, int depth)
 {
+  // bảng trang Sv39 chỉ có tối đa 3 cấp (depth 1..3),
+  // và KSTACK trong xv6 chỉ dài 1 trang (4KB), nên chặn sớm giúp tránh tràn
+  // kernel stack nếu bảng trang bị hỏng tạo vòng lặp hoặc nút không hợp lệ.
+  if(depth > 3)
+    return;
+
   for(int i = 0; i < 512; i++){
     pte_t pte = pagetable[i];
     if((pte & PTE_V) == 0)
