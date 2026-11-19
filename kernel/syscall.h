@@ -22,6 +22,7 @@
 #define SYS_close  21
 
 //! New definition
-#define SYS_trace  22
-#define SYS_ptree  23
-#define SYS_sysinfo 24
+#define SYS_trace    22
+#define SYS_ptree    23
+#define SYS_sysinfo  24
+#define SYS_pgaccess 25

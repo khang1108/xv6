@@ -370,6 +370,10 @@ typedef uint64 *pagetable_t; // 512 PTEs
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
 
+// Đây là phần để CPU RISC-V và QEMU luôn được bật
+// tự động khi một trang được đọc/ghi
+#define PTE_A (1L << 6) // accessed
+
 #define PTE_V (1L << 0) // valid
 #define PTE_R (1L << 1)
 #define PTE_W (1L << 2)

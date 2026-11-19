@@ -132,3 +132,45 @@ uint64 sys_sysinfo(void)
   }
   return 0;
 }
+
+uint64 sys_pgaccess(void)
+{
+  uint64 base, mask_addr;
+  int len;
+  
+  argaddr(0, &base);
+  argint(1, &len);
+  argaddr(2, &mask_addr);
+
+  if(len < 0 || len > 32) return -1;
+
+  struct proc *p = myproc();
+  uint curMask = 0; // Dùng để lưu lại các page đang được bật
+
+  for(int i = 0; i < len; i++){
+    uint64 first_addr_pagetable = base + i * PGSIZE;
+
+    if(first_addr_pagetable >= MAXVA) return -1;
+
+    // Tìm Page Table Entry (PTE) thông qua việc walk trên pagetable
+    // đây là ô nhớ 64bit dùng để mô tả 1 trang bộ nhớ 4096 bytes
+    // 54 bit cao chứa địa chỉ trang vật lý, 10 bit thấp chứa các bit cờ
+    pte_t *pte = walk(p->pagetable, first_addr_pagetable, 0);
+
+    // Vị trí bit :   7     6     5     4   |   3     2     1     0
+    // Tên cờ     :   D     A     G     U   |   X     W     R     V
+
+    // Kiểm tra nếu PTE_V và PTE_A được bật thì đánh dấu bit 
+    // tương ứng cho bảng trang trong curMask và tắt bit PTE_A đi 
+    // ta cần tắt bit PTE_A để reset chu kỳ tránh lần đọc sau bị báo trùng.
+    if(pte != 0 && (*pte & PTE_V) && (*pte & PTE_A)){
+      curMask |= (1U << i);
+      *pte &= ~PTE_A;
+    }
+  }
+
+  if(copyout(p->pagetable, mask_addr, (char*)&curMask, 
+      sizeof(curMask)) < 0) return -1;
+
+  return 0;
+}
