@@ -1,3 +1,5 @@
+#include "usyscall.h"
+
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
@@ -103,6 +105,9 @@ struct proc {
   uint64 sz;                   // Size of process memory (bytes)
   pagetable_t pagetable;       // User page table
   struct trapframe *trapframe; // data page for trampoline.S
+  // Trỏ tới trang chứa PID của tiến trình, kernel dùng con trỏ này để khởi tạo, ánh xạ và giải phóng trang
+  struct usyscall *usyscall; 
+
   struct context context;      // swtch() here to run process
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
