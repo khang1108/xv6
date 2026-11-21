@@ -23,6 +23,9 @@ int mkdir(const char*);
 int chdir(const char*);
 int dup(int);
 int getpid(void);
+
+int ugetpid(void); //Lấy pid của tiến trình thông qua USYSCALL
+
 char* sbrk(int);
 int sleep(int);
 int uptime(void);

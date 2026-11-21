@@ -140,6 +140,22 @@ found:
     return 0;
   }
 
+  //Cấp một trang RAM riêng để chia sẻ PID với user
+  p->usyscall = (struct usyscall *)kalloc();
+  if (p->usyscall == 0){ //K đủ bộ nhớ
+    //Dọn dẹp tài nguyên đã cấp và hùy tạo tiến trình
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+
+  //Xóa dữ liệu cũ trên toàn bộ trang trước khi cho user đọc
+  memset(p->usyscall, 0, PGSIZE);
+
+  //Ghi PID đã được cấp vào trang
+  p->usyscall->pid = p->pid;
+
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
@@ -169,6 +185,13 @@ freeproc(struct proc *p)
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
   p->pagetable = 0;
+
+  //Trả lại trang chia sẻ pid khi thu hồi tiến trình
+  if (p->usyscall){
+      kfree((void *)p->usyscall);
+  }
+  p->usyscall = 0;
+
   p->sz = 0;
   p->pid = 0;
   p->parent = 0;
@@ -210,6 +233,18 @@ proc_pagetable(struct proc *p)
     return 0;
   }
 
+  //Ánh xạ USYSCALL đến trang chia sẻ pid của tiến trình, user chỉ đọc
+  if (mappages(pagetable, USYSCALL, PGSIZE, (uint64)p->usyscall, PTE_R| PTE_U) < 0){
+    //Ánh xạ thất bại --> gỡ các ánh xạ trước đó
+    //Không giải phóng các trang vật lí vì chúng được quản lý bởi kernel
+    uvmunmap(pagetable, TRAPFRAME, 1, 0);
+    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+
+    //Giải phóng bảng trang đang tạo
+    uvmfree(pagetable, 0);
+    return 0;
+  }
+
   return pagetable;
 }
 
@@ -220,6 +255,10 @@ proc_freepagetable(pagetable_t pagetable, uint64 sz)
 {
   uvmunmap(pagetable, TRAMPOLINE, 1, 0);
   uvmunmap(pagetable, TRAPFRAME, 1, 0);
+
+  //Chỉ gỡ ánh xạ, còn trang RAM do freeproc() quản lý và giải phóng
+  uvmunmap(pagetable, USYSCALL, 1, 0);
+
   uvmfree(pagetable, sz);
 }
 

@@ -43,6 +43,10 @@
 // in both user and kernel space.
 #define TRAMPOLINE (MAXVA - PGSIZE)
 
+//Địa chỉ ảo của trang chia sẻ PID, nằm dưới TRAPFRAME một trang
+//kernel dùng trang này để ánh xạ cho user chỉ đọc pid, không được ghi
+#define USYSCALL (TRAPFRAME - PGSIZE)
+
 // map kernel stacks beneath the trampoline,
 // each surrounded by invalid guard pages.
 #define KSTACK(p) (TRAMPOLINE - ((p)+1)* 2*PGSIZE)
