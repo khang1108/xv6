@@ -36,7 +36,7 @@ int uptime(void);
 int trace(int);
 int ptree(struct ptreeinfo*, int);
 int sysinfo(struct sysinfo*);
-int pgaccess(void *base, int len, int *mask);
+int pgaccess(void *base, int len, void *mask);
 
 // ulib.c
 int stat(const char*, struct stat*);
