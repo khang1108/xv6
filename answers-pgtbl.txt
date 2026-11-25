@@ -1,0 +1,34 @@
+Lab 3: Page Tables — Câu trả lời lý thuyết
+===========================================
+
+1. Câu hỏi mục 4.1 (Speed up system calls):
+"Những lệnh gọi hệ thống nào khác trong xv6 có thể được tăng tốc bằng cách sử dụng trang chia sẻ này? Hãy giải thích."
+
+Trả lời:
+Kỹ thuật ánh xạ một trang chia sẻ chỉ đọc (PTE_R | PTE_U) tại USYSCALL phù hợp để tăng tốc các lệnh gọi hệ thống có đặc điểm:
+- Chỉ đọc thông tin từ kernel, KHÔNG làm thay đổi trạng thái hệ thống (read-only).
+- Dữ liệu trả về có thể được kernel cập nhật sẵn mỗi khi thay đổi, không cần tính toán phức tạp hoặc cấp phát tài nguyên mới tại thời điểm user gọi.
+
+Trong xv6, một số lệnh gọi hệ thống / truy vấn có thể áp dụng cơ chế này gồm:
+(a) getppid() (lấy PID của tiến trình cha):
+    Kernel có thể lưu thêm trường ppid trong struct usyscall và cập nhật khi tiến trình được tạo qua fork() hoặc khi được chuyển cha về tiến trình init (reparent). Khi đó user đọc trực tiếp u->ppid mà không cần trap vào kernel.
+(b) uptime() (lấy số tick đồng hồ từ lúc khởi động):
+    Thay vì tạo trang riêng cho từng tiến trình, kernel có thể chia sẻ một trang chỉ đọc toàn cục chứa bộ đếm ticks (được ngắt timer cập nhật). Tiến trình user chỉ cần đọc biến ticks trong trang đó để lấy thời gian hệ thống mà không tốn chi phí chuyển chế độ ecall/sret.
+(c) Đọc kích thước bộ nhớ tiến trình (p->sz):
+    Nếu kernel lưu trường sz trong struct usyscall và đồng bộ mỗi khi exec() hoặc sbrk() làm thay đổi kích thước vùng nhớ của tiến trình, các thư viện user (như cấp phát bộ nhớ) có thể đọc giới hạn heap ngay tại user space.
+
+Lưu ý: Các system call có tác dụng phụ hoặc yêu cầu kiểm tra quyền/đồng bộ phức tạp (như read, write, open, fork, wait, kill) KHÔNG thể thay thế bằng trang chia sẻ chỉ đọc mà vẫn bắt buộc đi qua trap vào kernel.
+
+---
+
+2. Tóm tắt giải thích các trang lá của tiến trình init từ vmprint() (Mục 4.2):
+Khi khởi động xv6 với đầy đủ USYSCALL, cây bảng trang của tiến trình init (pid == 1) có các trang lá ở mức L0:
+- Nhánh địa chỉ thấp (L2 = 0, L1 = 0):
+  * L0[0] (flags 0x1B = PTE_V | PTE_R | PTE_X | PTE_U): Trang Text/Rodata chứa mã lệnh thực thi của init (user chỉ đọc và thực thi, không ghi).
+  * L0[1] (flags 0x17 = PTE_V | PTE_R | PTE_W | PTE_U): Trang Data/BSS chứa dữ liệu toàn cục/tĩnh của init (user đọc và ghi).
+  * L0[2] (flags 0x07 = PTE_V | PTE_R | PTE_W): Stack Guard Page nằm dưới user stack; không bật PTE_U nên user truy cập khi tràn stack sẽ bị page fault.
+  * L0[3] và L0[4] (flags 0x17 = PTE_V | PTE_R | PTE_W | PTE_U): Các trang User Stack của tiến trình init.
+- Nhánh địa chỉ cao (L2 = 255, L1 = 511):
+  * L0[509] (flags 0x13 = PTE_V | PTE_R | PTE_U): Trang USYSCALL (TRAPFRAME - PGSIZE) chứa struct usyscall; user chỉ được đọc PID.
+  * L0[510] (flags 0x07 = PTE_V | PTE_R | PTE_W): Trang TRAPFRAME (TRAMPOLINE - PGSIZE) lưu thanh ghi khi trap; không bật PTE_U nên chỉ kernel truy cập.
+  * L0[511] (flags 0x0B = PTE_V | PTE_R | PTE_X): Trang TRAMPOLINE (MAXVA - PGSIZE) chứa mã chuyển ngữ cảnh trampoline.S; không bật PTE_U.

@@ -1,0 +1,66 @@
+\section{Bảng phân công nhiệm vụ}
+
+Bảng~\ref{tab:contribution} tổng kết phần công việc triển khai mã nguồn,
+kiểm thử và viết báo cáo của từng thành viên trong nhóm đối với Bài
+thực hành 03 -- Page Table.
+
+\begin{table}[H]
+    \centering
+    \footnotesize
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{l p{0.22\textwidth} X c}
+        \toprule
+        \textbf{Họ và tên} & \textbf{MSSV \& Vai trò} &
+        \textbf{Nhiệm vụ đảm nhiệm} & \textbf{Đóng góp} \\
+        \midrule
+        Nguyễn Phúc Khang & 24120068 \newline (Nhóm trưởng)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Định nghĩa cờ \code{PTE\_A} (\code{1L << 6})
+                    trong \texttt{kernel/riscv.h} và đăng ký system call
+                    \code{SYS\_pgaccess = 25}.
+                    \item Viết hàm \code{sys\_pgaccess()} trong
+                    \texttt{kernel/sysproc.c} dùng \code{walk()}, tắt
+                    \code{PTE\_A} và chép kết quả qua \code{copyout()}.
+                    \item Review Pull Request, gộp các nhánh lên
+                    \texttt{main}, viết test \texttt{pgtbltest} và tổng
+                    hợp báo cáo.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \midrule
+        Hoàng Trọng Nghĩa & 24120103 \newline (Thành viên)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Viết hàm \code{vmprint()} và hàm đệ quy
+                    \code{vmprintwalk()} trong \texttt{kernel/vm.c},
+                    khai báo tại \texttt{kernel/defs.h}.
+                    \item Thêm lời gọi in bảng trang cho tiến trình
+                    \code{init} (\code{p->pid == 1}) ở cuối
+                    \texttt{kernel/exec.c}.
+                    \item Chạy thử trên QEMU, giải thích các trang lá
+                    cùng bit quyền và viết nội dung mục \texttt{vmprint}.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \midrule
+        Phạm Minh Trọng & 24120151 \newline (Thành viên)
+            & \begin{minipage}[t]{\linewidth}
+                \begin{itemize}[leftmargin=*, noitemsep, topsep=0pt]
+                    \item Khai báo \code{USYSCALL},
+                    \code{struct usyscall} và thêm con trỏ quản lý vào
+                    \code{struct proc}.
+                    \item Cài đặt cấp phát, ánh xạ \code{PTE\_R | PTE\_U},
+                    gỡ ánh xạ và giải phóng trang trong
+                    \texttt{kernel/proc.c}.
+                    \item Viết \code{ugetpid()} trong
+                    \texttt{user/ulib.c}, tạo \texttt{user/ugetpidtest.c}
+                    và chạy kiểm tra trên QEMU.
+                \end{itemize}
+              \end{minipage}
+            & 100\% \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Bảng phân công nhiệm vụ của các thành viên trong nhóm}
+    \label{tab:contribution}
+\end{table}

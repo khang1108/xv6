@@ -27,3 +27,4 @@ barrier
 *.dSYM
 *.pcap
 .cache/
+.agents/

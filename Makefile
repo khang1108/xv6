@@ -204,6 +204,7 @@ UPROGS=\
 	$U/_pstree\
 	$U/_sysinfotest\
 	$U/_ugetpidtest\
+	$U/_pgtbltest\
 
 
 ifeq ($(LAB),syscall)

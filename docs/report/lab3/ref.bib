@@ -1,0 +1,51 @@
+% Tài liệu hướng dẫn đề bài Lab 3 (FIT-HCMUS)
+@manual{hcmus_os_lab3,
+  author       = {Lê, Viết-Long},
+  title        = {{Project 3 -- Page Table: Tài liệu hướng dẫn thực
+                   hành môn Hệ điều hành}},
+  organization = {Khoa Công nghệ Thông tin, Trường Đại học Khoa học Tự
+                  nhiên, ĐHQG-HCM},
+  year         = {2024},
+  note         = {Tài liệu thực hành khóa học Hệ điều hành (Moodle)}
+}
+
+% Tài liệu tham khảo gốc từ MIT CSAIL (phần Page tables - 2023)
+@misc{mitpgtbl,
+  author       = {{MIT CSAIL PDOS Group}},
+  title        = {Lab: Page tables},
+  year         = {2023},
+  howpublished = {MIT 6.828: Operating System Engineering,
+                  \url{https://pdos.csail.mit.edu/6.828/2023/labs/pgtbl.html}},
+  note         = {Referenced in Project 3 specification}
+}
+
+% Sách giáo trình xv6-riscv book của nhóm tác giả MIT (Chương 3)
+@manual{xv6book,
+  author = {Cox, Russ and Kaashoek, Frans and Morris, Robert},
+  title  = {{xv6}: A Simple, Unix-like Teaching Operating System
+            (Chapter 3: Page tables)},
+  year   = {2024},
+  note   = {RISC-V edition, revision 4.
+            \url{https://pdos.csail.mit.edu/6.828/2024/xv6/book-riscv-rev4.pdf}}
+}
+
+% Đặc tả kiến trúc RISC-V Privileged (Sv39)
+@manual{riscvspec,
+  author = {{RISC-V International}},
+  title  = {The {RISC-V} Instruction Set Manual, Volume II:
+            Privileged Architecture},
+  year   = {2024},
+  note   = {Sv39: Page-Based 39-bit Virtual-Memory System and PTE flags.
+            \url{https://docs.riscv.org/reference/isa/priv/supervisor.html}}
+}
+
+% Mã nguồn xv6-riscv liên quan đến bộ nhớ ảo, tiến trình và syscall
+@misc{xv6vm,
+  author       = {{MIT PDOS}},
+  title        = {{xv6-riscv} Source Code: \texttt{kernel/vm.c},
+                  \texttt{kernel/proc.c}, \texttt{kernel/sysproc.c},
+                  \texttt{kernel/riscv.h}},
+  howpublished = {GitHub repository,
+                  \url{https://github.com/mit-pdos/xv6-riscv}},
+  note         = {Sv39 traversal, process layout, and syscalls}
+}
